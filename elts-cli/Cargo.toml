@@ -4,3 +4,21 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+
+[dependencies.elts-common]
+path = "../elts-common"
+
+[dependencies.elts-requirements-gathering]
+path = "../1-elts-requirements-gathering"
+
+[dependencies.elts-engagement-scoping]
+path = "../2-elts-engagement-scoping"
+
+[dependencies.elts-dependency-analysis]
+path = "../3-elts-dependency-analysis"
+
+[dependencies.elts-project-replication]
+path = "../4-elts-project-replication"
+
+[dependencies.elts-pipeline-management]
+path = "../5-elts-pipeline-management"
