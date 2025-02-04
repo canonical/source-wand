@@ -32,7 +32,7 @@ impl DependencyTreeNode {
     }
 
     fn build_tree(&self, tree: &mut TreeBuilder) {
-        let text = format!("{}", self.project.name);
+        let text = format!("{} {}", self.project.name, self.project.version);
         if self.dependencies.is_empty() {
             tree.add_empty_child(text);
         }
