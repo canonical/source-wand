@@ -1,0 +1,9 @@
+[package]
+name = "source-wand-project-replication"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+
+[dependencies.source-wand-common]
+path = "../common"

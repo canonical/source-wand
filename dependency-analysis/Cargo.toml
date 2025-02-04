@@ -1,0 +1,10 @@
+[package]
+name = "source-wand-dependency-analysis"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ptree = "0.5.2"
+
+[dependencies.source-wand-common]
+path = "../common"

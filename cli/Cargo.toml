@@ -1,0 +1,25 @@
+[package]
+name = "source-wand"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = { version = "4.5.27", features = ["derive"] }
+
+[dependencies.source-wand-common]
+path = "../common"
+
+[dependencies.source-wand-requirements-gathering]
+path = "../requirements-gathering"
+
+[dependencies.source-wand-engagement-scoping]
+path = "../engagement-scoping"
+
+[dependencies.source-wand-dependency-analysis]
+path = "../dependency-analysis"
+
+[dependencies.source-wand-project-replication]
+path = "../project-replication"
+
+[dependencies.source-wand-pipeline-management]
+path = "../pipeline-management"
