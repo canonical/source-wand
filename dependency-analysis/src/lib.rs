@@ -1,4 +1,4 @@
-use build_systems::identifier::identify_build_system;
+use build_systems::{build_system_identity::BuildSystemIdentity, identifier::identify_build_system};
 use dependency_tree_generators::generate_dependency_tree;
 use dependency_tree_node::DependencyTreeNode;
 use dependency_tree_request::DependencyTreeRequest;
@@ -23,7 +23,7 @@ pub fn find_dependency_tree(request: DependencyTreeRequest) -> Result<Dependency
         // },
     };
 
-    let build_system = identify_build_system(&project_manipulator)?;
+    let build_system: BuildSystemIdentity = identify_build_system(&project_manipulator)?;
 
     generate_dependency_tree(build_system, &project_manipulator)
 }
