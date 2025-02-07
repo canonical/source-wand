@@ -9,4 +9,3 @@ pub fn identify_build_system(project_manipulator: &AnyProjectManipulator) -> Res
  
     Err("Unable to identify the build system of the project.".to_string())
 }
-
