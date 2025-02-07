@@ -2,6 +2,7 @@ use std::{path::PathBuf, process::Command};
 
 use super::project_manipulator::ProjectManipulator;
 
+#[derive(Debug, Clone)]
 pub struct LocalProjectManipulator {
     pub project_root: PathBuf,
 }
@@ -29,4 +30,10 @@ impl ProjectManipulator for LocalProjectManipulator {
             Err(String::from_utf8(output.stderr).unwrap())
         }
     }
+
+    fn try_run_shell(&self, command: String, retries: u32) -> Result<String, String> {
+        self.to_any().try_run_shell(command, retries)
+    }
+    
+    fn cleanup(&self) {}
 }

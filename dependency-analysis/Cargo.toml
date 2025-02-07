@@ -4,7 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+lxd = "0.1.9"
 ptree = "0.5.2"
+uuid = { version = "1.13.1", features = ["v4"] }
 
 [dependencies.source-wand-common]
 path = "../common"
