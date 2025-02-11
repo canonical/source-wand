@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use clap::{ArgAction, Parser, Subcommand, ValueEnum};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use source_wand_dependency_analysis::{dependency_tree_node::DependencyTreeNode, dependency_tree_request::DependencyTreeRequest, find_dependency_tree, unique_dependencies_list::UniqueDependenciesList};
 
 #[derive(Debug, Parser)]
@@ -50,7 +50,7 @@ pub enum OutputFormat {
     Yaml,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 enum OutputData {
     Tree(DependencyTreeNode),
     List(UniqueDependenciesList),
@@ -61,6 +61,16 @@ impl OutputData {
         match self {
             OutputData::Tree(tree) => tree.to_string(),
             OutputData::List(list) => Ok(list.to_string()),
+        }
+    }
+}
+
+impl Serialize for OutputData {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where S: serde::Serializer {
+        match self {
+            OutputData::Tree(tree) => tree.serialize(serializer),
+            OutputData::List(list) => list.serialize(serializer),
         }
     }
 }
