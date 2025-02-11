@@ -15,8 +15,12 @@ use source_wand_common::{dependency_ensurer::required_dependency::AnyRequiredDep
 use uuid::Uuid;
 
 pub mod dependency_tree_node;
+pub mod unique_dependencies_list;
+
 pub mod dependency_tree_request;
+
 pub mod build_systems;
+
 pub mod dependency_tree_generators;
 
 pub fn find_dependency_tree(request: DependencyTreeRequest) -> Result<DependencyTreeNode, String> {
