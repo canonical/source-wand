@@ -1,12 +1,15 @@
 use std::path::PathBuf;
 
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 use source_wand_dependency_analysis::{dependency_tree_request::DependencyTreeRequest, find_dependency_tree};
 
 #[derive(Debug, Parser)]
 pub struct DependenciesArgs {
     #[command(subcommand)]
-    command: DependenciesCommand
+    command: DependenciesCommand,
+
+    #[arg(long, value_enum, default_value = "tree")]
+    format: OutputFormat,
 }
 
 #[derive(Debug, Subcommand)]
@@ -36,6 +39,13 @@ pub struct NameDependenciesArgs {
     version: String,
 }
 
+#[derive(Debug, Clone, ValueEnum)]
+pub enum OutputFormat {
+    Tree,
+    Json,
+    Yaml,
+}
+
 pub fn dependencies_command(args: &DependenciesArgs) -> Result<(), String> {
     let dependency_tree = match &args.command {
         DependenciesCommand::Local(args) => {
@@ -63,7 +73,11 @@ pub fn dependencies_command(args: &DependenciesArgs) -> Result<(), String> {
         },
     };
 
-    println!("{}", dependency_tree.to_string()?);
+    match args.format {
+        OutputFormat::Tree => println!("{}", dependency_tree.to_string()?),
+        OutputFormat::Json => println!("{}", serde_json::to_string_pretty(&dependency_tree).map_err(|e| e.to_string())?),
+        OutputFormat::Yaml => println!("{}", serde_yaml::to_string(&dependency_tree).map_err(|e| e.to_string())?),
+    }
 
     Ok(())
 }

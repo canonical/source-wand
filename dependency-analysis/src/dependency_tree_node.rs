@@ -1,7 +1,8 @@
 use ptree::{write_tree, TreeBuilder};
+use serde::{Deserialize, Serialize};
 use source_wand_common::project::Project;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DependencyTreeNode {
     pub project: Project,
     pub dependencies: Vec<Box<DependencyTreeNode>>,
