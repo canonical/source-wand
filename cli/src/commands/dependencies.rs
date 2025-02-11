@@ -4,48 +4,48 @@ use clap::{Parser, Subcommand};
 use source_wand_dependency_analysis::{dependency_tree_request::DependencyTreeRequest, find_dependency_tree};
 
 #[derive(Debug, Parser)]
-pub struct DeptreeArgs {
+pub struct DependenciesArgs {
     #[command(subcommand)]
-    command: DeptreeCommand
+    command: DependenciesCommand
 }
 
 #[derive(Debug, Subcommand)]
-pub enum DeptreeCommand {
+pub enum DependenciesCommand {
     #[command(about = "From a local project.")]
-    Local(LocalDeptreeArgs),
+    Local(LocalDependenciesArgs),
     #[command(about = "From a project in a git repository.")]
-    Git(GitDeptreeArgs),
+    Git(GitDependenciesArgs),
     #[command(about = "From the name/version pair of a project.")]
-    ByName(NameDeptreeArgs),
+    ByName(NameDependenciesArgs),
 }
 
 #[derive(Debug, Parser)]
-pub struct LocalDeptreeArgs {
+pub struct LocalDependenciesArgs {
     path: PathBuf,
 }
 
 #[derive(Debug, Parser)]
-pub struct GitDeptreeArgs {
+pub struct GitDependenciesArgs {
     url: String,
     branch: Option<String>,
 }
 
 #[derive(Debug, Parser)]
-pub struct NameDeptreeArgs {
+pub struct NameDependenciesArgs {
     name: String,
     version: String,
 }
 
-pub fn deptree_command(args: &DeptreeArgs) -> Result<(), String> {
+pub fn dependencies_command(args: &DependenciesArgs) -> Result<(), String> {
     let dependency_tree = match &args.command {
-        DeptreeCommand::Local(args) => {
+        DependenciesCommand::Local(args) => {
             find_dependency_tree(
                 DependencyTreeRequest::LocalProject {
                     path: args.path.clone()
                 }
             )?
         },
-        DeptreeCommand::Git(args) => {
+        DependenciesCommand::Git(args) => {
             find_dependency_tree(
                 DependencyTreeRequest::GitProject {
                     url: args.url.clone(),
@@ -53,7 +53,7 @@ pub fn deptree_command(args: &DeptreeArgs) -> Result<(), String> {
                 }
             )?
         },
-        DeptreeCommand::ByName(args) => {
+        DependenciesCommand::ByName(args) => {
             find_dependency_tree(
                 DependencyTreeRequest::NameBased {
                     name: args.name.clone(),

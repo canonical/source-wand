@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use commands::deptree::{deptree_command, DeptreeArgs};
+use commands::dependencies::{dependencies_command, DependenciesArgs};
 
 mod commands;
 
@@ -12,13 +12,13 @@ struct Cli {
 #[derive(Debug, Subcommand)]
 enum Command {
     #[command(about = "Find the dependency tree of a project.")]
-    Deptree(DeptreeArgs),
+    Dependencies(DependenciesArgs),
 }
 
 fn execute_command() -> Result<(), String> {
     match Cli::parse().command {
-        Command::Deptree(args) => {
-            deptree_command(&args)
+        Command::Dependencies(args) => {
+            dependencies_command(&args)
         }
     }
 }

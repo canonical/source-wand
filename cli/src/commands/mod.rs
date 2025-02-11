@@ -1,1 +1,1 @@
-pub mod deptree;
+pub mod dependencies;
