@@ -1,6 +1,10 @@
 use crate::project_manipulator::project_manipulator::AnyProjectManipulator;
 
-use super::rust_cargo::RustCargoDependency;
+use super::{
+    python_pip::PythonPipDependency,
+    python_pipgrip::PythonPipgripDependency,
+    rust_cargo::RustCargoDependency
+};
 
 pub trait RequiredDependency {
     fn is_present(&self, project_manipulator: &AnyProjectManipulator) -> bool;
@@ -11,11 +15,25 @@ pub trait RequiredDependency {
 
 pub enum AnyRequiredDependency {
     RustCargo(RustCargoDependency),
+    PythonPip(PythonPipDependency),
+    PythonPipgrip(PythonPipgripDependency),
 }
 
 impl RustCargoDependency {
     pub fn to_any() -> AnyRequiredDependency {
         AnyRequiredDependency::RustCargo(RustCargoDependency)
+    }
+}
+
+impl PythonPipDependency {
+    pub fn to_any() -> AnyRequiredDependency {
+        AnyRequiredDependency::PythonPip(PythonPipDependency)
+    }
+}
+
+impl PythonPipgripDependency {
+    pub fn to_any() -> AnyRequiredDependency {
+        AnyRequiredDependency::PythonPipgrip(PythonPipgripDependency)
     }
 }
 
@@ -25,6 +43,12 @@ impl RequiredDependency for AnyRequiredDependency {
             AnyRequiredDependency::RustCargo(dependency) => {
                 dependency.is_present(project_manipulator)
             },
+            AnyRequiredDependency::PythonPip(dependency) => {
+                dependency.is_present(project_manipulator)
+            },
+            AnyRequiredDependency::PythonPipgrip(dependency) => {
+                dependency.is_present(project_manipulator)
+            },
         }
     }
 
@@ -32,7 +56,13 @@ impl RequiredDependency for AnyRequiredDependency {
         match self {
             AnyRequiredDependency::RustCargo(dependency) => {
                 dependency.install(project_manipulator)
-            }
+            },
+            AnyRequiredDependency::PythonPip(dependency) => {
+                dependency.install(project_manipulator)
+            },
+            AnyRequiredDependency::PythonPipgrip(dependency) => {
+                dependency.install(project_manipulator)
+            },
         }
     }
     
@@ -40,7 +70,13 @@ impl RequiredDependency for AnyRequiredDependency {
         match self {
             AnyRequiredDependency::RustCargo(dependency) => {
                 dependency.get_name()
-            }
+            },
+            AnyRequiredDependency::PythonPip(dependency) => {
+                dependency.get_name()
+            },
+            AnyRequiredDependency::PythonPipgrip(dependency) => {
+                dependency.get_name()
+            },
         }
     }
 }

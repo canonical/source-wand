@@ -6,6 +6,10 @@ pub fn identify_build_system(project_manipulator: &AnyProjectManipulator) -> Res
     if project_manipulator.run_shell("ls | grep \"^Cargo.toml$\"".to_string()).unwrap_or_default().trim() == "Cargo.toml" {
         return Ok(BuildSystemIdentity::RustCargo)
     }
- 
+
+    if project_manipulator.run_shell("ls | grep \"^requirements.txt$\"".to_string()).unwrap_or_default().trim() == "requirements.txt" {
+        return Ok(BuildSystemIdentity::PythonPip)
+    }
+
     Err("Unable to identify the build system of the project.".to_string())
 }
