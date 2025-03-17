@@ -66,11 +66,11 @@ impl ProjectManipulator for LxdProjectManipulator {
             Err(String::from_utf8(output.stderr).unwrap())
         }
     }
-    
+
     fn try_run_shell(&self, command: String, retries: u32) -> Result<String, String> {
         self.to_any().try_run_shell(command, retries)
     }
-    
+
     fn cleanup(&self) {
         let _ = self.run_shell(
             format!(
