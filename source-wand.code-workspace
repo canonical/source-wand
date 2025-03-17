@@ -1,0 +1,25 @@
+{
+	"folders": [
+		{
+			"path": "cli"
+		},
+		{
+			"path": "common"
+		},
+		{
+			"path": "dependency-analysis"
+		},
+		{
+			"path": "engagement-scoping"
+		},
+		{
+			"path": "pipeline-management"
+		},
+		{
+			"path": "project-replication"
+		},
+		{
+			"path": "requirements-gathering"
+		}
+	]
+}
