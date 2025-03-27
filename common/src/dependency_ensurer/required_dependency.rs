@@ -1,9 +1,7 @@
 use crate::project_manipulator::project_manipulator::AnyProjectManipulator;
 
 use super::{
-    python_pip::PythonPipDependency,
-    python_pipgrip::PythonPipgripDependency,
-    rust_cargo::RustCargoDependency
+    java_maven::JavaMavenDependency, python_pip::PythonPipDependency, python_pipgrip::PythonPipgripDependency, rust_cargo::RustCargoDependency
 };
 
 pub trait RequiredDependency {
@@ -17,6 +15,7 @@ pub enum AnyRequiredDependency {
     RustCargo(RustCargoDependency),
     PythonPip(PythonPipDependency),
     PythonPipgrip(PythonPipgripDependency),
+    JavaMaven(JavaMavenDependency),
 }
 
 impl RustCargoDependency {
@@ -37,6 +36,12 @@ impl PythonPipgripDependency {
     }
 }
 
+impl JavaMavenDependency {
+    pub fn to_any() -> AnyRequiredDependency {
+        AnyRequiredDependency::JavaMaven(JavaMavenDependency)
+    }
+}
+
 impl RequiredDependency for AnyRequiredDependency {
     fn is_present(&self, project_manipulator: &AnyProjectManipulator) -> bool {
         match self {
@@ -47,6 +52,9 @@ impl RequiredDependency for AnyRequiredDependency {
                 dependency.is_present(project_manipulator)
             },
             AnyRequiredDependency::PythonPipgrip(dependency) => {
+                dependency.is_present(project_manipulator)
+            },
+            AnyRequiredDependency::JavaMaven(dependency) => {
                 dependency.is_present(project_manipulator)
             },
         }
@@ -63,6 +71,9 @@ impl RequiredDependency for AnyRequiredDependency {
             AnyRequiredDependency::PythonPipgrip(dependency) => {
                 dependency.install(project_manipulator)
             },
+            AnyRequiredDependency::JavaMaven(dependency) => {
+                dependency.install(project_manipulator)
+            },
         }
     }
     
@@ -75,6 +86,9 @@ impl RequiredDependency for AnyRequiredDependency {
                 dependency.get_name()
             },
             AnyRequiredDependency::PythonPipgrip(dependency) => {
+                dependency.get_name()
+            },
+            AnyRequiredDependency::JavaMaven(dependency) => {
                 dependency.get_name()
             },
         }
