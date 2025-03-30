@@ -11,5 +11,9 @@ pub fn identify_build_system(project_manipulator: &AnyProjectManipulator) -> Res
         return Ok(BuildSystemIdentity::PythonPip)
     }
 
+    if project_manipulator.run_shell("ls | grep \"^go.mod$\"".to_string()).unwrap_or_default().trim() == "go.mod" {
+        return Ok(BuildSystemIdentity::Go)
+    }
+
     Err("Unable to identify the build system of the project.".to_string())
 }
