@@ -1,4 +1,5 @@
 use source_wand_common::dependency_ensurer::{
+    go::GoDependency,
     python_pip::PythonPipDependency,
     python_pipgrip::PythonPipgripDependency,
     required_dependency::AnyRequiredDependency,
@@ -8,6 +9,7 @@ use source_wand_common::dependency_ensurer::{
 pub enum BuildSystemIdentity {
     RustCargo,
     PythonPip,
+    Go,
 }
 
 impl BuildSystemIdentity {
@@ -22,6 +24,11 @@ impl BuildSystemIdentity {
                 vec![
                     PythonPipDependency::to_any(),
                     PythonPipgripDependency::to_any(),
+                ]
+            },
+            BuildSystemIdentity::Go => {
+                vec![
+                    GoDependency::to_any(),
                 ]
             },
         }

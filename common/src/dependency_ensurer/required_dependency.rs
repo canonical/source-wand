@@ -1,6 +1,7 @@
 use crate::project_manipulator::project_manipulator::AnyProjectManipulator;
 
 use super::{
+    go::GoDependency,
     python_pip::PythonPipDependency,
     python_pipgrip::PythonPipgripDependency,
     rust_cargo::RustCargoDependency
@@ -17,6 +18,7 @@ pub enum AnyRequiredDependency {
     RustCargo(RustCargoDependency),
     PythonPip(PythonPipDependency),
     PythonPipgrip(PythonPipgripDependency),
+    Go(GoDependency),
 }
 
 impl RustCargoDependency {
@@ -37,6 +39,12 @@ impl PythonPipgripDependency {
     }
 }
 
+impl GoDependency {
+    pub fn to_any() -> AnyRequiredDependency {
+        AnyRequiredDependency::Go(GoDependency)
+    }
+}
+
 impl RequiredDependency for AnyRequiredDependency {
     fn is_present(&self, project_manipulator: &AnyProjectManipulator) -> bool {
         match self {
@@ -47,6 +55,9 @@ impl RequiredDependency for AnyRequiredDependency {
                 dependency.is_present(project_manipulator)
             },
             AnyRequiredDependency::PythonPipgrip(dependency) => {
+                dependency.is_present(project_manipulator)
+            },
+            AnyRequiredDependency::Go(dependency) => {
                 dependency.is_present(project_manipulator)
             },
         }
@@ -63,6 +74,9 @@ impl RequiredDependency for AnyRequiredDependency {
             AnyRequiredDependency::PythonPipgrip(dependency) => {
                 dependency.install(project_manipulator)
             },
+            AnyRequiredDependency::Go(dependency) => {
+                dependency.install(project_manipulator)
+            },
         }
     }
     
@@ -75,6 +89,9 @@ impl RequiredDependency for AnyRequiredDependency {
                 dependency.get_name()
             },
             AnyRequiredDependency::PythonPipgrip(dependency) => {
+                dependency.get_name()
+            },
+            AnyRequiredDependency::Go(dependency) => {
                 dependency.get_name()
             },
         }
