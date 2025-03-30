@@ -6,3 +6,5 @@ pub mod python_pip;
 pub mod python_pipgrip;
 
 pub mod java_maven;
+
+pub mod go;

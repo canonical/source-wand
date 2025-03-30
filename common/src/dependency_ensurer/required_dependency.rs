@@ -1,7 +1,11 @@
 use crate::project_manipulator::project_manipulator::AnyProjectManipulator;
 
 use super::{
-    java_maven::JavaMavenDependency, python_pip::PythonPipDependency, python_pipgrip::PythonPipgripDependency, rust_cargo::RustCargoDependency
+    go::GoDependency,
+    java_maven::JavaMavenDependency,
+    python_pip::PythonPipDependency,
+    python_pipgrip::PythonPipgripDependency,
+    rust_cargo::RustCargoDependency
 };
 
 pub trait RequiredDependency {
@@ -16,6 +20,7 @@ pub enum AnyRequiredDependency {
     PythonPip(PythonPipDependency),
     PythonPipgrip(PythonPipgripDependency),
     JavaMaven(JavaMavenDependency),
+    Go(GoDependency),
 }
 
 impl RustCargoDependency {
@@ -42,6 +47,12 @@ impl JavaMavenDependency {
     }
 }
 
+impl GoDependency {
+    pub fn to_any() -> AnyRequiredDependency {
+        AnyRequiredDependency::Go(GoDependency)
+    }
+}
+
 impl RequiredDependency for AnyRequiredDependency {
     fn is_present(&self, project_manipulator: &AnyProjectManipulator) -> bool {
         match self {
@@ -55,6 +66,9 @@ impl RequiredDependency for AnyRequiredDependency {
                 dependency.is_present(project_manipulator)
             },
             AnyRequiredDependency::JavaMaven(dependency) => {
+                dependency.is_present(project_manipulator)
+            },
+            AnyRequiredDependency::Go(dependency) => {
                 dependency.is_present(project_manipulator)
             },
         }
@@ -74,6 +88,9 @@ impl RequiredDependency for AnyRequiredDependency {
             AnyRequiredDependency::JavaMaven(dependency) => {
                 dependency.install(project_manipulator)
             },
+            AnyRequiredDependency::Go(dependency) => {
+                dependency.install(project_manipulator)
+            },
         }
     }
     
@@ -89,6 +106,9 @@ impl RequiredDependency for AnyRequiredDependency {
                 dependency.get_name()
             },
             AnyRequiredDependency::JavaMaven(dependency) => {
+                dependency.get_name()
+            },
+            AnyRequiredDependency::Go(dependency) => {
                 dependency.get_name()
             },
         }
