@@ -6,7 +6,7 @@ pub struct JavaMavenDependency;
 
 impl RequiredDependency for JavaMavenDependency {
     fn is_present(&self, project_manipulator: &AnyProjectManipulator) -> bool {
-        match project_manipulator.run_shell("mvn".to_string()) {
+        match project_manipulator.run_shell("mvn --version".to_string()) {
             Ok(_) => true,
             Err(_) => false,
         }
