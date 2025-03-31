@@ -48,7 +48,7 @@ parts:
     rust-path: ["cli"]
 
 apps:
-  palang:
+  source-wand:
     command: bin/source-wand
     plugs:
       - home
