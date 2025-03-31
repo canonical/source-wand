@@ -1,0 +1,55 @@
+name: source-wand
+version: 1.0.0
+summary: CLI tool that helps with large scale manipulations of source code
+description: |
+  `source-wand` is a CLI tool that helps with large scale manipulations of source code.
+
+  # Dependency analysis
+  You can use `source-wand` to generate the dependency tree of any program of the following kind:
+    - Rust/Cargo
+    - Python/Pip
+    - Java/Maven
+    - Go
+
+  To generate the dependency tree of a project, you can point to a local directory:
+  ```bash
+  $ source-wand dependencies local /path/to/project/
+  ```
+
+  Or you can point to a git repository:
+  ```bash
+  $ source-wand dependencies git https://git.example.com/repository
+  ```
+
+  You can format the output in the following ways:
+    - No arguments -> it will print a tree using ASCII characters for the branches
+    - `--flatten` -> it will build a unique list of dependencies from the tree
+    - `--format [json or yaml]` -> it will return the tree or list as json or yaml
+
+  You can combine these arguments to get a flat json list for example.
+
+base: core22
+confinement: strict
+
+parts:
+  rust-deps:
+    plugin: nil
+    build-packages:
+      - curl
+    override-pull: |
+      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+  palang:
+    plugin: rust
+    build-packages:
+      - libssl-dev
+      - pkg-config
+    source: .
+    after: [rust-deps]
+    rust-path: ["cli"]
+
+apps:
+  palang:
+    command: bin/source-wand
+    plugs:
+      - home
+
