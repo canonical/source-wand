@@ -1,11 +1,35 @@
 # Source Wand
 Source Wand is a tool that helps you analyze and mirror source code.
 
-# Features
-## Generating the dependency tree of a project
-To generate the dependency tree of a project, use the `source-wand dependencies` command.
+# Usage
+## Dependency analysis
+Install source-wand.
+```bash
+sudo snap install source-wand --edge
+```
 
-There are two ways to provide a project to `source-wand`:
+Generate dependency tree of local directory.
+```bash
+source-wand dependencies local /path/to/directory
+```
 
-1. From a local directory: `source-wand dependencies local <path-to-project-directory>`
-2. From a git repository: `source-wand dependencies git <path-to-git-repository>`
+Generate dependency tree of git repository.
+```bash
+source-wand dependencies git /url/of/git/repository
+```
+
+You can format the output in json or yaml.
+```bash
+source-wand dependencies --format json local .
+source-wand dependencies --format yaml local .
+```
+
+You can flatten the dependency tree to a list of unique dependencies.
+```bash
+source-wand dependencies --flatten local .
+```
+
+You can also combine the flatten and format arguments.
+```bash
+source-wand dependencies --flatten --format json local .
+```
