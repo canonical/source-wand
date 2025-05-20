@@ -1,5 +1,14 @@
 use clap::{Parser, Subcommand};
-use commands::dependencies::{dependencies_command, DependenciesArgs};
+use commands::{
+    compare::{
+        compare_command,
+        CompareArgs
+    },
+    dependencies::{
+        dependencies_command,
+        DependenciesArgs
+    }
+};
 
 mod commands;
 
@@ -13,13 +22,15 @@ struct Cli {
 enum Command {
     #[command(about = "Find the dependency tree of a project.")]
     Dependencies(DependenciesArgs),
+
+    #[command(about = "Compare dependency lists")]
+    Compare(CompareArgs),
 }
 
 fn execute_command() -> Result<(), String> {
     match Cli::parse().command {
-        Command::Dependencies(args) => {
-            dependencies_command(&args)
-        }
+        Command::Dependencies(args) => dependencies_command(&args),
+        Command::Compare(args) => compare_command(&args),
     }
 }
 
