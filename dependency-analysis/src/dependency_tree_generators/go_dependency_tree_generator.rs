@@ -1,5 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
+use reqwest::blocking::get;
+use scraper::{Html, Selector};
 use source_wand_common::{project::Project, project_manipulator::project_manipulator::ProjectManipulator};
 
 use crate::dependency_tree_node::DependencyTreeNode;
@@ -38,9 +40,10 @@ pub fn generate_go_dependency_tree(
     let root: &String = &roots[0];
 
     let mut project_cache: HashMap<String, Project> = HashMap::new();
+    let mut repository_cache: HashMap<String, String> = HashMap::new();
     for module in &all_modules {
         let (name, version) = parse_module(module);
-        let repository_url: String = extract_repository_url(&name);
+        let repository_url: String = extract_repository_url(&name, &mut repository_cache);
         project_cache.insert(
             module.clone(),
             Project::new(
@@ -87,9 +90,12 @@ fn parse_module(s: &str) -> (String, String) {
     }
 }
 
-fn extract_repository_url(module_path: &str) -> String {
-    let parts: Vec<&str> = module_path.split('/').collect();
+fn extract_repository_url(module_path: &str, cache: &mut HashMap<String, String>) -> String {
+    if let Some(url) = cache.get(module_path) {
+        return url.clone();
+    }
 
+    let parts: Vec<&str> = module_path.split('/').collect();
     let has_at_least_three_parts: bool = parts.len() >= 3;
 
     let is_github: bool = has_at_least_three_parts && parts[0] == "github.com";
@@ -97,12 +103,36 @@ fn extract_repository_url(module_path: &str) -> String {
     let is_bitbucket: bool = has_at_least_three_parts && parts[0] == "bitbucket.org";
     let is_golang: bool = module_path.starts_with("golang.org/x/");
 
-    if is_github || is_gitlab || is_bitbucket {
+    let repository_url: String = if is_github || is_gitlab || is_bitbucket {
         format!("https://{}/{}/{}", parts[0], parts[1], parts[2])
-    }
-    else if is_golang {
+    } else if is_golang {
         format!("https://go.googlesource.com/{}", &module_path["golang.org/x/".len()..])
     } else {
-        format!("https://{}", module_path)
+        match resolve_vanity_import(module_path) {
+            Some(url) => url,
+            None => format!("https://{}", module_path),
+        }
+    };
+
+    cache.insert(module_path.to_string(), repository_url.clone());
+    repository_url
+}
+
+fn resolve_vanity_import(module_path: &str) -> Option<String> {
+    let url: String = format!("https://{}?go-get=1", module_path);
+
+    let document: Html = Html::parse_document(&get(&url).ok()?.text().ok()?);
+    let selector: Selector = Selector::parse(r#"meta[name="go-import"]"#).ok()?;
+
+    for element in document.select(&selector) {
+        if let Some(content) = element.value().attr("content") {
+            let parts: Vec<&str> = content.split_whitespace().collect();
+
+            if parts.len() == 3 {
+                return Some(parts[2].to_string());
+            }
+        }
     }
+
+    None
 }
