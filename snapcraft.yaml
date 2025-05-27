@@ -1,5 +1,5 @@
 name: source-wand
-version: 1.0.0
+version: 1.0.1
 summary: CLI tool that helps with large scale manipulations of source code
 description: |
   `source-wand` is a CLI tool that helps with large scale manipulations of source code.

@@ -7,7 +7,7 @@ use commands::{
     dependencies::{
         dependencies_command,
         DependenciesArgs
-    }
+    }, mirror_dependencies::{mirror_dependencies_command, MirrorDependenciesArgs}
 };
 
 mod commands;
@@ -25,12 +25,16 @@ enum Command {
 
     #[command(about = "Compare dependency lists")]
     Compare(CompareArgs),
+
+    #[command(about = "Mirror dependencies")]
+    MirrorDependencies(MirrorDependenciesArgs),
 }
 
 fn execute_command() -> Result<(), String> {
     match Cli::parse().command {
         Command::Dependencies(args) => dependencies_command(&args),
         Command::Compare(args) => compare_command(&args),
+        Command::MirrorDependencies(args) => mirror_dependencies_command(&args),
     }
 }
 
