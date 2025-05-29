@@ -1,5 +1,10 @@
+use anyhow::Result;
 use clap::{Parser, Subcommand};
 use commands::{
+    apply_manual::{
+        apply_manual_command,
+        ApplyManualArgs
+    },
     compare::{
         compare_command,
         CompareArgs
@@ -7,7 +12,19 @@ use commands::{
     dependencies::{
         dependencies_command,
         DependenciesArgs
-    }, mirror_dependencies::{mirror_dependencies_command, MirrorDependenciesArgs}
+    },
+    init::{
+        init_command,
+        InitArgs
+    },
+    mirror_dependencies::{
+        mirror_dependencies_command,
+        MirrorDependenciesArgs
+    },
+    onboard::{
+        onboard_command,
+        OnboardArgs
+    }
 };
 
 mod commands;
@@ -28,18 +45,24 @@ enum Command {
 
     #[command(about = "Mirror dependencies")]
     MirrorDependencies(MirrorDependenciesArgs),
+
+    #[command(about = "Initialize the onboarding of a project")]
+    Init(InitArgs),
+
+    #[command(about = "Try to add your manual configurations to automated onboarding")]
+    ApplyManual(ApplyManualArgs),
+
+    #[command(about = "Onboard a project and its dependencies")]
+    Onboard(OnboardArgs),
 }
 
-fn execute_command() -> Result<(), String> {
+fn main() -> Result<()> {
     match Cli::parse().command {
         Command::Dependencies(args) => dependencies_command(&args),
         Command::Compare(args) => compare_command(&args),
         Command::MirrorDependencies(args) => mirror_dependencies_command(&args),
-    }
-}
-
-fn main() {
-    if let Err(e) = execute_command() {
-        eprintln!("{}", e);
+        Command::Init(args) => init_command(&args),
+        Command::ApplyManual(args) => apply_manual_command(&args),
+        Command::Onboard(args) => onboard_command(&args),
     }
 }

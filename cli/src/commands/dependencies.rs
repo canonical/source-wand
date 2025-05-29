@@ -1,8 +1,14 @@
 use std::path::PathBuf;
 
+use anyhow::{Error, Result};
 use clap::{ArgAction, Parser, Subcommand, ValueEnum};
 use serde::Serialize;
-use source_wand_dependency_analysis::{dependency_tree_node::DependencyTreeNode, dependency_tree_request::DependencyTreeRequest, find_dependency_tree, unique_dependencies_list::UniqueDependenciesList};
+use source_wand_dependency_analysis::{
+    dependency_tree_node::DependencyTreeNode,
+    dependency_tree_request::DependencyTreeRequest,
+    find_dependency_tree,
+    unique_dependencies_list::UniqueDependenciesList
+};
 
 #[derive(Debug, Parser)]
 pub struct DependenciesArgs {
@@ -75,14 +81,14 @@ impl Serialize for OutputData {
     }
 }
 
-pub fn dependencies_command(args: &DependenciesArgs) -> Result<(), String> {
+pub fn dependencies_command(args: &DependenciesArgs) -> Result<()> {
     let dependency_tree = match &args.command {
         DependenciesCommand::Local(args) => {
             find_dependency_tree(
                 DependencyTreeRequest::LocalProject {
                     path: args.path.clone()
                 }
-            )?
+            ).map_err(|e| Error::msg(e))?
         },
         DependenciesCommand::Git(args) => {
             find_dependency_tree(
@@ -90,7 +96,7 @@ pub fn dependencies_command(args: &DependenciesArgs) -> Result<(), String> {
                     url: args.url.clone(),
                     branch: args.branch.clone(),
                 }
-            )?
+            ).map_err(|e| Error::msg(e))?
         },
         DependenciesCommand::ByName(args) => {
             find_dependency_tree(
@@ -98,7 +104,7 @@ pub fn dependencies_command(args: &DependenciesArgs) -> Result<(), String> {
                     name: args.name.clone(),
                     version: args.version.clone(),
                 }
-            )?
+            ).map_err(|e| Error::msg(e))?
         },
     };
 
@@ -110,9 +116,9 @@ pub fn dependencies_command(args: &DependenciesArgs) -> Result<(), String> {
     };
 
     match args.format {
-        OutputFormat::Tree => println!("{}", output_data.to_string()?),
-        OutputFormat::Json => println!("{}", serde_json::to_string_pretty(&output_data).map_err(|e| e.to_string())?),
-        OutputFormat::Yaml => println!("{}", serde_yaml::to_string(&output_data).map_err(|e| e.to_string())?),
+        OutputFormat::Tree => println!("{}", output_data.to_string().map_err(|e| Error::msg(e))?),
+        OutputFormat::Json => println!("{}", serde_json::to_string_pretty(&output_data)?),
+        OutputFormat::Yaml => println!("{}", serde_yaml::to_string(&output_data)?),
     }
 
     Ok(())
