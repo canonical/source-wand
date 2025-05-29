@@ -1,3 +1,4 @@
+use anyhow::Result;
 use clap::{Parser, Subcommand};
 use commands::{
     apply_manual::{
@@ -27,6 +28,7 @@ use commands::{
 };
 
 mod commands;
+mod utils;
 
 #[derive(Debug, Parser)]
 struct Cli {
@@ -55,7 +57,7 @@ enum Command {
     Onboard(OnboardArgs),
 }
 
-fn execute_command() -> Result<(), String> {
+fn main() -> Result<()> {
     match Cli::parse().command {
         Command::Dependencies(args) => dependencies_command(&args),
         Command::Compare(args) => compare_command(&args),
@@ -63,11 +65,5 @@ fn execute_command() -> Result<(), String> {
         Command::Init(args) => init_command(&args),
         Command::ApplyManual(args) => apply_manual_command(&args),
         Command::Onboard(args) => onboard_command(&args),
-    }
-}
-
-fn main() {
-    if let Err(e) = execute_command() {
-        eprintln!("{}", e);
     }
 }

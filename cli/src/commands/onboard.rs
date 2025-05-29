@@ -1,3 +1,4 @@
+use anyhow::Result;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
@@ -6,6 +7,6 @@ pub struct OnboardArgs {
     from_git: String,
 }
 
-pub fn onboard_command(args: &OnboardArgs) -> Result<(), String> {
+pub fn onboard_command(_args: &OnboardArgs) -> Result<()> {
     Ok(())
 }
