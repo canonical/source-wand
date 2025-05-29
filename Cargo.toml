@@ -1,3 +1,13 @@
 [workspace]
 resolver = "3"
-members = ["cli", "common", "dependency-analysis", "engagement-scoping", "pipeline-management", "project-replication", "requirements-gathering", "dependency-tree"]
+members = [
+    "cli",
+    "common",
+    "dependency-analysis",
+    "engagement-scoping",
+    "pipeline-management",
+    "project-replication",
+    "requirements-gathering",
+    "dependency-tree",
+    "onboarding"
+]

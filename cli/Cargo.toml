@@ -11,6 +11,7 @@ serde_json = "1.0.138"
 serde_yaml = "0.9.34"
 
 source-wand-dependency-tree = { path = "../dependency-tree" }
+source-wand-onboarding = { path = "../onboarding" }
 
 [dependencies.source-wand-common]
 path = "../common"
