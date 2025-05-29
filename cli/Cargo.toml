@@ -10,23 +10,7 @@ serde = { version = "1.0.217", features = ["derive"] }
 serde_json = "1.0.138"
 serde_yaml = "0.9.34"
 
-source-wand-dependency-tree = { path = "../dependency-tree" }
 source-wand-onboarding = { path = "../onboarding" }
-
-[dependencies.source-wand-common]
-path = "../common"
-
-[dependencies.source-wand-requirements-gathering]
-path = "../requirements-gathering"
-
-[dependencies.source-wand-engagement-scoping]
-path = "../engagement-scoping"
-
-[dependencies.source-wand-dependency-analysis]
-path = "../dependency-analysis"
-
-[dependencies.source-wand-project-replication]
-path = "../project-replication"
-
-[dependencies.source-wand-pipeline-management]
-path = "../pipeline-management"
+source-wand-dependency-tree = { path = "../dependency-tree" }
+source-wand-dependency-analysis = { path = "../dependency-analysis" }
+source-wand-common = { path = "../common" }

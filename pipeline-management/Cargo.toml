@@ -1,9 +1,0 @@
-[package]
-name = "source-wand-pipeline-management"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-
-[dependencies.source-wand-common]
-path = "../common"
