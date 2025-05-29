@@ -28,10 +28,22 @@ pub fn init_command(args: &InitArgs) -> Result<()> {
         }
     ).map_err(|e| Error::msg(e))?;
 
+    let nb_dependencies: usize = dependency_tree.flatten().dependencies.len();
+    println!(" > {} unique dependencies were found in the project", nb_dependencies);
     println!(" > Saving dependency tree");
     write_yaml_file(&dependency_tree, "dependencies.yaml")?;
 
-    plan_onboarding()?;
+    let nb_manual_requests: usize = plan_onboarding()?;
+    if nb_manual_requests == 0 {
+        println!("\nWhat to do next?");
+        println!(" 1. source-wand onboard");
+    }
+    else {
+        println!("\n > {} of {} dependencies require manual attention", nb_manual_requests, nb_dependencies);
+        println!("What to do next?");
+        println!(" 1. Edit all ./to-complete/<name>-<version>.yaml files manually");
+        println!(" 2. source-wand apply-manual");
+    }
 
     Ok(())
 }

@@ -6,6 +6,8 @@ pub enum OnboardingSource {
     Git(OnboardingSourceGit),
     GitMonorepository(OnboardingSourceGitMonorepository),
     Sourcecraft(OnboardingSourceSourcecraft),
+
+    String(String),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -38,5 +40,9 @@ impl OnboardingSource {
 
     pub fn sourcecraft(sourcecraft: String, track: String) -> Self {
         OnboardingSource::Sourcecraft(OnboardingSourceSourcecraft { sourcecraft, track })
+    }
+
+    pub fn to_complete() -> Self {
+        OnboardingSource::String("<COMPLETE-THIS-SECTION>".to_string())
     }
 }
