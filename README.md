@@ -3,11 +3,6 @@ Source Wand is a tool that helps you analyze and mirror source code.
 
 # Usage
 ## Dependency analysis
-Install source-wand.
-```bash
-sudo snap install source-wand --edge
-```
-
 Generate dependency tree of local directory.
 ```bash
 source-wand dependencies local /path/to/directory
