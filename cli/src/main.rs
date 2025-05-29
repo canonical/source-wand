@@ -7,7 +7,15 @@ use commands::{
     dependencies::{
         dependencies_command,
         DependenciesArgs
-    }, mirror_dependencies::{mirror_dependencies_command, MirrorDependenciesArgs}
+    },
+    init::{
+        init_command,
+        InitArgs
+    },
+    mirror_dependencies::{
+        mirror_dependencies_command,
+        MirrorDependenciesArgs
+    }
 };
 
 mod commands;
@@ -28,6 +36,9 @@ enum Command {
 
     #[command(about = "Mirror dependencies")]
     MirrorDependencies(MirrorDependenciesArgs),
+
+    #[command(about = "Initialize the onboarding of a project")]
+    Init(InitArgs),
 }
 
 fn execute_command() -> Result<(), String> {
@@ -35,6 +46,7 @@ fn execute_command() -> Result<(), String> {
         Command::Dependencies(args) => dependencies_command(&args),
         Command::Compare(args) => compare_command(&args),
         Command::MirrorDependencies(args) => mirror_dependencies_command(&args),
+        Command::Init(args) => init_command(&args),
     }
 }
 
