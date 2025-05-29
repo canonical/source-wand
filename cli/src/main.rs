@@ -1,18 +1,18 @@
 use clap::{Parser, Subcommand};
 use commands::{
-    compare::{
+    apply_manual::{
+        apply_manual_command,
+        ApplyManualArgs
+    }, compare::{
         compare_command,
         CompareArgs
-    },
-    dependencies::{
+    }, dependencies::{
         dependencies_command,
         DependenciesArgs
-    },
-    init::{
+    }, init::{
         init_command,
         InitArgs
-    },
-    mirror_dependencies::{
+    }, mirror_dependencies::{
         mirror_dependencies_command,
         MirrorDependenciesArgs
     }
@@ -39,6 +39,9 @@ enum Command {
 
     #[command(about = "Initialize the onboarding of a project")]
     Init(InitArgs),
+
+    #[command(about = "Try to add your manual configurations to automated onboarding")]
+    ApplyManual(ApplyManualArgs),
 }
 
 fn execute_command() -> Result<(), String> {
@@ -47,6 +50,7 @@ fn execute_command() -> Result<(), String> {
         Command::Compare(args) => compare_command(&args),
         Command::MirrorDependencies(args) => mirror_dependencies_command(&args),
         Command::Init(args) => init_command(&args),
+        Command::ApplyManual(args) => apply_manual_command(&args),
     }
 }
 
