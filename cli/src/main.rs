@@ -3,18 +3,26 @@ use commands::{
     apply_manual::{
         apply_manual_command,
         ApplyManualArgs
-    }, compare::{
+    },
+    compare::{
         compare_command,
         CompareArgs
-    }, dependencies::{
+    },
+    dependencies::{
         dependencies_command,
         DependenciesArgs
-    }, init::{
+    },
+    init::{
         init_command,
         InitArgs
-    }, mirror_dependencies::{
+    },
+    mirror_dependencies::{
         mirror_dependencies_command,
         MirrorDependenciesArgs
+    },
+    onboard::{
+        onboard_command,
+        OnboardArgs
     }
 };
 
@@ -42,6 +50,9 @@ enum Command {
 
     #[command(about = "Try to add your manual configurations to automated onboarding")]
     ApplyManual(ApplyManualArgs),
+
+    #[command(about = "Onboard a project and its dependencies")]
+    Onboard(OnboardArgs),
 }
 
 fn execute_command() -> Result<(), String> {
@@ -51,6 +62,7 @@ fn execute_command() -> Result<(), String> {
         Command::MirrorDependencies(args) => mirror_dependencies_command(&args),
         Command::Init(args) => init_command(&args),
         Command::ApplyManual(args) => apply_manual_command(&args),
+        Command::Onboard(args) => onboard_command(&args),
     }
 }
 
