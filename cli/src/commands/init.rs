@@ -1,8 +1,12 @@
 use anyhow::{Error, Result};
 use clap::Parser;
 use source_wand_common::utils::write_yaml_file::write_yaml_file;
-use source_wand_dependency_analysis::{dependency_tree_node::DependencyTreeNode, dependency_tree_request::DependencyTreeRequest, find_dependency_tree};
-use source_wand_onboarding::plan::plan_onboarding;
+use source_wand_dependency_analysis::{
+    dependency_tree_node::DependencyTreeNode,
+    dependency_tree_request::DependencyTreeRequest,
+    find_dependency_tree
+};
+use source_wand_onboarding::plan::plan_onboarding::plan_onboarding;
 
 #[derive(Debug, Parser)]
 pub struct InitArgs {
