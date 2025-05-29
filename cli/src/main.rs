@@ -28,7 +28,6 @@ use commands::{
 };
 
 mod commands;
-mod utils;
 
 #[derive(Debug, Parser)]
 struct Cli {
