@@ -1,9 +1,16 @@
+use std::sync::{atomic::{AtomicUsize, Ordering}, Arc};
+
 use anyhow::Result;
-use source_wand_common::{project::Project, utils::{
-    read_yaml_file::read_yaml_file,
-    write_yaml_file::write_yaml_file
-}};
+use futures::future::try_join_all;
+use source_wand_common::{
+    project::Project,
+    utils::{
+        read_yaml_file::read_yaml_file,
+        write_yaml_file::write_yaml_file
+    }
+};
 use source_wand_dependency_analysis::dependency_tree_node::DependencyTreeNode;
+use tokio::runtime::Runtime;
 
 use crate::plan::{
     onboarding_plan::OnboardingPlan,
@@ -11,45 +18,67 @@ use crate::plan::{
 };
 
 pub fn plan_onboarding() -> Result<usize> {
+    let runtime: Runtime = tokio::runtime::Runtime::new()?;
+    runtime.block_on(plan_onboarding_async())
+}
+
+async fn plan_onboarding_async() -> Result<usize> {
     let dependency_tree: DependencyTreeNode = read_yaml_file("dependencies.yaml")?;
-    let mut nb_manual_requests: usize = 0;
+    let nb_manual_requests: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
 
     println!(" > Generating onboarding plans for each dependency");
-    for dependency in dependency_tree.flatten().dependencies {
-        println!("  > {} ({})", dependency.name, dependency.version);
-        if let Ok(plan) = generate_onboarding_plan(&dependency) {
-            write_yaml_file(
-                &plan,
-                format!(
-                    "packages/{}-{}/onboard.yaml",
-                    dependency.name.replace("/", "-"),
-                    dependency.version.replace("/", "-"),
-                ).as_str()
-            )?;
-        }
-        else {
-            let plan: OnboardingPlan = OnboardingPlan::new(
-                dependency.name.clone(),
-                dependency.version.clone(),
-                dependency.license,
-                OnboardingSource::to_complete(),
-                format!("{}/edge", dependency.version),
-                Vec::new()
-            );
-            write_yaml_file(
-                &plan,
-                format!(
-                    "to-complete/{}-{}.yaml",
-                    dependency.name.replace("/", "-"),
-                    dependency.version.replace("/", "-"),
-                ).as_str()
-            )?;
+    let tasks = dependency_tree
+        .flatten()
+        .dependencies
+        .into_iter()
+        .map(|dependency| {
+            let nb_manual_requests: Arc<AtomicUsize> = Arc::clone(&nb_manual_requests);
+            tokio::spawn(async move {
+                plan_dependency_onboarding(dependency, nb_manual_requests).await
+            })
+        })
+        .collect::<Vec<_>>();
 
-            nb_manual_requests += 1;
-        }
+    try_join_all(tasks).await?;
+
+    Ok(nb_manual_requests.load(Ordering::Relaxed))
+}
+
+async fn plan_dependency_onboarding(dependency: Project, nb_manual_requests: Arc<AtomicUsize>) -> Result<()> {
+    println!("  > {} ({})", dependency.name, dependency.version);
+
+    if let Ok(plan) = generate_onboarding_plan(&dependency) {
+        write_yaml_file(
+            &plan,
+            format!(
+                "packages/{}-{}/onboard.yaml",
+                dependency.name.replace("/", "-"),
+                dependency.version.replace("/", "-"),
+            ).as_str()
+        )?;
+    }
+    else {
+        let plan: OnboardingPlan = OnboardingPlan::new(
+            dependency.name.clone(),
+            dependency.version.clone(),
+            dependency.license,
+            OnboardingSource::to_complete(),
+            format!("{}/edge", dependency.version),
+            Vec::new()
+        );
+        write_yaml_file(
+            &plan,
+            format!(
+                "to-complete/{}-{}.yaml",
+                dependency.name.replace("/", "-"),
+                dependency.version.replace("/", "-"),
+            ).as_str()
+        )?;
+
+        nb_manual_requests.fetch_add(1, Ordering::Relaxed);
     }
 
-    Ok(nb_manual_requests)
+    Ok(())
 }
 
 fn generate_onboarding_plan(dependency: &Project) -> Result<OnboardingPlan> {
