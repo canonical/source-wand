@@ -1,5 +1,7 @@
 use std::{path::PathBuf, process::Command, str::FromStr, thread, time::Duration};
 
+use anyhow::{bail, Error, Result};
+
 use super::{local_project_manipulator::LocalProjectManipulator, project_manipulator::ProjectManipulator};
 
 #[derive(Debug, Clone)]
@@ -9,7 +11,7 @@ pub struct LxdProjectManipulator {
 }
 
 impl LxdProjectManipulator {
-    pub fn new(machine_name: String, project_root: PathBuf) -> Result<Self, String> {
+    pub fn new(machine_name: String, project_root: PathBuf) -> Result<Self> {
         if !Self::machine_exists(&machine_name) {
             println!("Machine \"{}\" does not exist, creating it.", machine_name);
             Self::create_machine(&machine_name, "ubuntu:22.04")?;
@@ -33,11 +35,10 @@ impl LxdProjectManipulator {
         lxc_machine == format!("\"{}\"", machine_name)
     }
 
-    fn create_machine(machine_name: &String, base: &str) -> Result<(), String> {
+    fn create_machine(machine_name: &String, base: &str) -> Result<()> {
         let local: LocalProjectManipulator = LocalProjectManipulator::new(PathBuf::from_str("/").unwrap());
-        let response: Result<(), String> = local.run_shell(format!("lxc launch {} {}", base, machine_name))
-            .map(|_| ())
-            .map_err(|e| e.to_string());
+        let response: Result<()> = local.run_shell(format!("lxc launch {} {}", base, machine_name))
+            .map(|_| ());
 
         thread::sleep(Duration::from_secs(5));
 
@@ -46,7 +47,7 @@ impl LxdProjectManipulator {
 }
 
 impl ProjectManipulator for LxdProjectManipulator {
-    fn run_shell(&self, command: String) -> Result<String, String> {
+    fn run_shell(&self, command: String) -> Result<String> {
         let output = Command::new("bash")
             .arg("-c")
             .arg(format!(
@@ -55,19 +56,18 @@ impl ProjectManipulator for LxdProjectManipulator {
                 self.project_root.as_os_str().to_str().unwrap_or_default(),
                 command
             ))
-            .output()
-            .map_err(|e| e.to_string())?;
+            .output()?;
 
         if output.status.success() {
             String::from_utf8(output.stdout)
-                .map_err(|e| e.to_string())
+                .map_err(|e| Error::msg(e))
         }
         else {
-            Err(String::from_utf8(output.stderr).unwrap())
+            bail!(String::from_utf8(output.stderr).unwrap())
         }
     }
 
-    fn try_run_shell(&self, command: String, retries: u32) -> Result<String, String> {
+    fn try_run_shell(&self, command: String, retries: u32) -> Result<String> {
         self.to_any().try_run_shell(command, retries)
     }
 

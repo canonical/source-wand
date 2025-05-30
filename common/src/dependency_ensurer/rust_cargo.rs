@@ -1,3 +1,5 @@
+use anyhow::Result;
+
 use crate::project_manipulator::project_manipulator::{AnyProjectManipulator, ProjectManipulator};
 
 use super::required_dependency::RequiredDependency;
@@ -12,7 +14,7 @@ impl RequiredDependency for RustCargoDependency {
         }
     }
 
-    fn install(&self, project_manipulator: &AnyProjectManipulator) -> Result<(), String> {
+    fn install(&self, project_manipulator: &AnyProjectManipulator) -> Result<()> {
         project_manipulator.run_shell("sudo snap install rustup --classic".to_string())?;
         project_manipulator.run_shell("rustup default stable".to_string())?;
         Ok(())

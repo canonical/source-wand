@@ -1,5 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
+use anyhow::{Error, Result};
 use reqwest::blocking::get;
 use scraper::{Html, Selector};
 use source_wand_common::{project::Project, project_manipulator::project_manipulator::ProjectManipulator};
@@ -8,7 +9,7 @@ use crate::dependency_tree_node::DependencyTreeNode;
 
 pub fn generate_go_dependency_tree(
     project_manipulator: &dyn ProjectManipulator,
-) -> Result<DependencyTreeNode, String> {
+) -> Result<DependencyTreeNode> {
     let graph_raw: String = project_manipulator.run_shell("go mod graph".to_string())?;
 
     let mut dependencies_map: HashMap<String, Vec<String>> = HashMap::new();
@@ -34,7 +35,7 @@ pub fn generate_go_dependency_tree(
 
     let roots: Vec<_> = all_modules.difference(&child_modules).cloned().collect();
     if roots.is_empty() {
-        return Err("Could not determine root module".to_string());
+        return Err(Error::msg("Could not determine root module"));
     }
 
     let root: &String = &roots[0];

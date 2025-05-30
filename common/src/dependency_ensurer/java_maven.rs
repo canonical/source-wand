@@ -1,3 +1,5 @@
+use anyhow::Result;
+
 use crate::project_manipulator::project_manipulator::{AnyProjectManipulator, ProjectManipulator};
 
 use super::required_dependency::RequiredDependency;
@@ -12,7 +14,7 @@ impl RequiredDependency for JavaMavenDependency {
         }
     }
 
-    fn install(&self, project_manipulator: &AnyProjectManipulator) -> Result<(), String> {
+    fn install(&self, project_manipulator: &AnyProjectManipulator) -> Result<()> {
         project_manipulator.run_shell("sudo apt-get update".to_string())?;
         project_manipulator.run_shell("sudo apt-get install -y maven".to_string())?;
         Ok(())

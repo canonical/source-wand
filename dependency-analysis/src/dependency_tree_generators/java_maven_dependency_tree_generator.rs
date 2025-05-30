@@ -1,8 +1,9 @@
+use anyhow::{Error, Result};
 use regex::Regex;
 use source_wand_common::{project::Project, project_manipulator::project_manipulator::{AnyProjectManipulator, ProjectManipulator}};
 use crate::dependency_tree_node::DependencyTreeNode;
 
-pub fn generate_java_maven_dependency_tree(project_manipulator: &AnyProjectManipulator) -> Result<DependencyTreeNode, String> {
+pub fn generate_java_maven_dependency_tree(project_manipulator: &AnyProjectManipulator) -> Result<DependencyTreeNode> {
     let logs: String = project_manipulator.run_shell(
         "mvn dependency:tree".to_string()
     )?;
@@ -76,7 +77,7 @@ fn compute_branch_depth(branch: &String) -> (String, u32) {
     (striped_branch, depth)
 }
 
-fn extract_tree_from_logs(logs: &String) -> Result<(String, Vec<String>), String> {
+fn extract_tree_from_logs(logs: &String) -> Result<(String, Vec<String>)> {
     let record_begin_marker: &str = "[\u{1b}[1;34mINFO\u{1b}[m] \u{1b}[1m--- ";
     let record_end_marker: &str = "[\u{1b}[1;34mINFO\u{1b}[m] \u{1b}[1m-";
     let prefix_to_strip: &str = "[\u{1b}[1;34mINFO\u{1b}[m] ";
@@ -101,7 +102,7 @@ fn extract_tree_from_logs(logs: &String) -> Result<(String, Vec<String>), String
     }
 
     let (root, branches) = lines.split_first()
-        .ok_or("Invalid tree format. Could not separate root from branches.")?;
+        .ok_or(Error::msg("Invalid tree format. Could not separate root from branches."))?;
 
     Ok(
         (

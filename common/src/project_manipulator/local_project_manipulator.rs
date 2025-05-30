@@ -1,5 +1,7 @@
 use std::{path::PathBuf, process::Command};
 
+use anyhow::{bail, Error, Result};
+
 use super::project_manipulator::ProjectManipulator;
 
 #[derive(Debug, Clone)]
@@ -14,24 +16,23 @@ impl LocalProjectManipulator {
 }
 
 impl ProjectManipulator for LocalProjectManipulator {
-    fn run_shell(&self, command: String) -> Result<String, String> {
+    fn run_shell(&self, command: String) -> Result<String> {
         let output = Command::new("bash")
             .arg("-c")
             .arg(&command)
             .current_dir(&self.project_root)
-            .output()
-            .map_err(|e| e.to_string())?;
+            .output()?;
 
         if output.status.success() {
             String::from_utf8(output.stdout)
-                .map_err(|e| e.to_string())
+                .map_err(|e| Error::msg(e))
         }
         else {
-            Err(String::from_utf8(output.stderr).unwrap())
+            bail!(String::from_utf8(output.stderr).unwrap())
         }
     }
 
-    fn try_run_shell(&self, command: String, retries: u32) -> Result<String, String> {
+    fn try_run_shell(&self, command: String, retries: u32) -> Result<String> {
         self.to_any().try_run_shell(command, retries)
     }
     

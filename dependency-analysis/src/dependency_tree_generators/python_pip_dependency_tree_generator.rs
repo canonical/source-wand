@@ -1,8 +1,9 @@
+use anyhow::Result;
 use source_wand_common::{project::Project, project_manipulator::project_manipulator::{AnyProjectManipulator, ProjectManipulator}};
 
 use crate::dependency_tree_node::DependencyTreeNode;
 
-pub fn generate_python_pip_dependency_tree(project_manipulator: &AnyProjectManipulator) -> Result<DependencyTreeNode, String> {
+pub fn generate_python_pip_dependency_tree(project_manipulator: &AnyProjectManipulator) -> Result<DependencyTreeNode> {
     let root_name: String = project_manipulator.run_shell("basename \"$PWD\"".to_string())?.trim().to_string();
     let raw_tree: String = project_manipulator.run_shell("pipgrip --requirements-file requirements.txt --tree".to_string())?;
 

@@ -1,5 +1,6 @@
 use std::{path::PathBuf, str::FromStr};
 
+use anyhow::Result;
 use build_systems::{
     build_system_identity::BuildSystemIdentity,
     identifier::identify_build_system
@@ -7,7 +8,9 @@ use build_systems::{
 use dependency_tree_generators::generate_dependency_tree;
 use dependency_tree_node::DependencyTreeNode;
 use dependency_tree_request::DependencyTreeRequest;
-use source_wand_common::{dependency_ensurer::required_dependency::AnyRequiredDependency, project_manipulator::{
+use source_wand_common::{
+    dependency_ensurer::required_dependency::AnyRequiredDependency,
+    project_manipulator::{
         local_project_manipulator::LocalProjectManipulator,
         lxd_project_manipulator::LxdProjectManipulator,
         project_manipulator::{AnyProjectManipulator, ProjectManipulator}
@@ -23,7 +26,7 @@ pub mod build_systems;
 
 pub mod dependency_tree_generators;
 
-pub fn find_dependency_tree(request: DependencyTreeRequest) -> Result<DependencyTreeNode, String> {
+pub fn find_dependency_tree(request: DependencyTreeRequest) -> Result<DependencyTreeNode> {
     let project_manipulator: AnyProjectManipulator = match request {
         DependencyTreeRequest::LocalProject { path } => {
             LocalProjectManipulator::new(path).to_any()
@@ -35,7 +38,7 @@ pub fn find_dependency_tree(request: DependencyTreeRequest) -> Result<Dependency
                     "/home/ubuntu/{}",
                     Uuid::new_v4().to_string()
                 ).as_str()
-            ).map_err(|e| e.to_string())?;
+            )?;
             let project_root_str: String = project_root.as_os_str().to_str().unwrap_or_default().to_string();
 
             let manipulator: LxdProjectManipulator = LxdProjectManipulator::new(machine_name, project_root)?;
@@ -65,7 +68,7 @@ pub fn find_dependency_tree(request: DependencyTreeRequest) -> Result<Dependency
     let dependencies: Vec<AnyRequiredDependency> = build_system.get_required_dependencies();
     project_manipulator.ensure_dependencies(dependencies)?;
 
-    let dependency_tree: Result<DependencyTreeNode, String> = generate_dependency_tree(build_system, &project_manipulator);
+    let dependency_tree: Result<DependencyTreeNode> = generate_dependency_tree(build_system, &project_manipulator);
     project_manipulator.cleanup();
 
     dependency_tree

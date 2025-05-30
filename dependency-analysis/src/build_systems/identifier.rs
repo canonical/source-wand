@@ -1,8 +1,9 @@
+use anyhow::{Error, Result};
 use source_wand_common::project_manipulator::project_manipulator::{AnyProjectManipulator, ProjectManipulator};
 
 use super::build_system_identity::BuildSystemIdentity;
 
-pub fn identify_build_system(project_manipulator: &AnyProjectManipulator) -> Result<BuildSystemIdentity, String> {
+pub fn identify_build_system(project_manipulator: &AnyProjectManipulator) -> Result<BuildSystemIdentity> {
     if project_manipulator.run_shell("ls | grep \"^Cargo.toml$\"".to_string()).unwrap_or_default().trim() == "Cargo.toml" {
         return Ok(BuildSystemIdentity::RustCargo);
     }
@@ -19,5 +20,5 @@ pub fn identify_build_system(project_manipulator: &AnyProjectManipulator) -> Res
         return Ok(BuildSystemIdentity::Go)
     }
 
-    Err("Unable to identify the build system of the project.".to_string())
+    Err(Error::msg("Unable to identify the build system of the project.".to_string()))
 }

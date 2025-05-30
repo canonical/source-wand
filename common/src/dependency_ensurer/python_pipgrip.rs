@@ -1,3 +1,5 @@
+use anyhow::Result;
+
 use crate::project_manipulator::project_manipulator::{AnyProjectManipulator, ProjectManipulator};
 
 use super::required_dependency::RequiredDependency;
@@ -12,7 +14,7 @@ impl RequiredDependency for PythonPipgripDependency {
         }
     }
 
-    fn install(&self, project_manipulator: &AnyProjectManipulator) -> Result<(), String> {
+    fn install(&self, project_manipulator: &AnyProjectManipulator) -> Result<()> {
         println!("{}", project_manipulator.run_shell("pip install pipgrip".to_string())?);
         Ok(())
     }

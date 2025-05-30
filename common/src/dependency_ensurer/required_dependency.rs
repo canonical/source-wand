@@ -1,3 +1,5 @@
+use anyhow::Result;
+
 use crate::project_manipulator::project_manipulator::AnyProjectManipulator;
 
 use super::{
@@ -10,7 +12,7 @@ use super::{
 
 pub trait RequiredDependency {
     fn is_present(&self, project_manipulator: &AnyProjectManipulator) -> bool;
-    fn install(&self, project_manipulator: &AnyProjectManipulator) -> Result<(), String>;
+    fn install(&self, project_manipulator: &AnyProjectManipulator) -> Result<()>;
 
     fn get_name(&self) -> String;
 }
@@ -74,7 +76,7 @@ impl RequiredDependency for AnyRequiredDependency {
         }
     }
 
-    fn install(&self, project_manipulator: &AnyProjectManipulator) -> Result<(), String> {
+    fn install(&self, project_manipulator: &AnyProjectManipulator) -> Result<()> {
         match self {
             AnyRequiredDependency::RustCargo(dependency) => {
                 dependency.install(project_manipulator)

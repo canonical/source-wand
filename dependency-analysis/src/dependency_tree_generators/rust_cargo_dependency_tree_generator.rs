@@ -1,8 +1,9 @@
+use anyhow::{Error, Result};
 use source_wand_common::{project::Project, project_manipulator::project_manipulator::{AnyProjectManipulator, ProjectManipulator}};
 
 use crate::dependency_tree_node::DependencyTreeNode;
 
-pub fn generate_rust_cargo_dependency_tree(project_manipulator: &AnyProjectManipulator) -> Result<DependencyTreeNode, String> {
+pub fn generate_rust_cargo_dependency_tree(project_manipulator: &AnyProjectManipulator) -> Result<DependencyTreeNode> {
     let raw_tree: String = project_manipulator.run_shell("cargo tree --prefix depth --format \" ;; {p} ;; {l} ;; {r}\"".to_string())?;
     let mut parsed_tree: Vec<DepthAnnotatedDependencyTreeNode> = Vec::new();
 
@@ -16,7 +17,7 @@ pub fn generate_rust_cargo_dependency_tree(project_manipulator: &AnyProjectManip
             .map(str::to_string)
             .collect();
 
-        let depth: u32 = tokens[0].parse::<u32>().map_err(|_| "Unable to parse depth")?;
+        let depth: u32 = tokens[0].parse::<u32>().map_err(|_| Error::msg("Unable to parse depth"))?;
         let name: String = name_and_version[0].clone();
         let version: String = name_and_version[1].clone();
         let license: String = tokens[2].clone();

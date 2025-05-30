@@ -1,3 +1,4 @@
+use anyhow::Result;
 use java_maven_dependency_tree_generator::generate_java_maven_dependency_tree;
 use go_dependency_tree_generator::generate_go_dependency_tree;
 use python_pip_dependency_tree_generator::generate_python_pip_dependency_tree;
@@ -17,7 +18,7 @@ pub mod go_dependency_tree_generator;
 pub fn generate_dependency_tree(
     build_system: BuildSystemIdentity,
     project_manipulator: &AnyProjectManipulator
-) -> Result<DependencyTreeNode, String> {
+) -> Result<DependencyTreeNode> {
     match build_system {
         BuildSystemIdentity::RustCargo => {
             generate_rust_cargo_dependency_tree(project_manipulator)
