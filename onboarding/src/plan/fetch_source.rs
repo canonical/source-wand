@@ -22,23 +22,29 @@ pub fn fetch_source(project: &Project) -> Result<OnboardingSource> {
     create_dir_all(&project_directory)?;
 
     let project_manipulator: LocalProjectManipulator = LocalProjectManipulator::new(project_directory);
-    project_manipulator.run_shell(format!("git clone {} .", project.repository))?;
 
-    let tags_raw: String = project_manipulator.run_shell("git tag".to_string())?;
-    let tags: Vec<&str> = tags_raw.lines().into_iter().collect();
+    let tags_raw: String = project_manipulator.run_shell(format!("git ls-remote --tags {}", project.repository))?;
+    let tags: Vec<&str> = tags_raw.lines()
+        .into_iter()
+        .filter_map(|tag| tag.split("\t").last())
+        .collect();
 
-    let branches_raw: String = project_manipulator.run_shell("git branch -a".to_string())?;
-    let branches: Vec<&str> = branches_raw.lines().skip(1).map(|branch| branch.trim()).collect();
+    let branches_raw: String = project_manipulator.run_shell(format!("git ls-remote --branches {}", project.repository))?;
+    let branches: Vec<&str> = branches_raw.lines()
+        .skip(1)
+        .filter_map(|branch| branch.split("\t").last())
+        .collect();
 
-    let checkout: String = if tags.contains(&project.version.as_str()) {
-        project.version.clone()
-    }
-    else if let Some(branch) = branches.iter().find(|branch| branch.ends_with(&project.version)) {
-        branch.to_string()
-    }
-    else {
-        bail!("No tag or branch matches the package version")
-    };
+    let checkout: String =
+        if let Some(tag) = tags.iter().find(|tag| tag.contains(&project.version)) {
+            tag.to_string()
+        }
+        else if let Some(branch) = branches.iter().find(|branch| branch.contains(&project.version)) {
+            branch.to_string()
+        }
+        else {
+            bail!("No tag or branch matches the package version")
+        };
 
     Ok(OnboardingSource::git(project.repository.clone(), checkout))
 }

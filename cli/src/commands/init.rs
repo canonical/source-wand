@@ -41,7 +41,7 @@ pub fn init_command(args: &InitArgs) -> Result<()> {
     else {
         println!("\n > {} of {} dependencies require manual attention", nb_manual_requests, nb_dependencies);
         println!("What to do next?");
-        println!(" 1. Edit all ./to-complete/<name>-<version>.yaml files manually");
+        println!(" 1. Edit all ./to-complete/<name>-<version>/source-wand.yaml files manually");
         println!(" 2. source-wand apply-manual");
     }
 

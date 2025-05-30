@@ -55,7 +55,7 @@ async fn plan_dependency_onboarding(dependency: Project, nb_manual_requests: Arc
             write_yaml_file(
                 &plan,
                 format!(
-                    "packages/{}-{}/onboard.yaml",
+                    "packages/{}-{}/source-wand.yaml",
                     dependency.name.replace("/", "-"),
                     dependency.version.replace("/", "-"),
                 ).as_str()
@@ -84,7 +84,7 @@ async fn plan_dependency_onboarding(dependency: Project, nb_manual_requests: Arc
             write_yaml_file(
                 &plan,
                 format!(
-                    "to-complete/{}-{}/onboard.yaml",
+                    "to-complete/{}-{}/source-wand.yaml",
                     dependency.name.replace("/", "-"),
                     dependency.version.replace("/", "-"),
                 ).as_str()
