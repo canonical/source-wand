@@ -1,11 +1,13 @@
 use std::sync::{atomic::{AtomicUsize, Ordering}, Arc};
 
 use anyhow::Result;
+use colorize::AnsiColor;
 use futures::future::try_join_all;
 use source_wand_common::{
     project::Project,
     utils::{
         read_yaml_file::read_yaml_file,
+        write_text_file::write_text_file,
         write_yaml_file::write_yaml_file
     }
 };
@@ -16,6 +18,8 @@ use crate::plan::{
     onboarding_plan::OnboardingPlan,
     onboarding_source::OnboardingSource
 };
+
+use super::fetch_source::fetch_source;
 
 pub fn plan_onboarding() -> Result<usize> {
     let runtime: Runtime = tokio::runtime::Runtime::new()?;
@@ -45,37 +49,49 @@ async fn plan_onboarding_async() -> Result<usize> {
 }
 
 async fn plan_dependency_onboarding(dependency: Project, nb_manual_requests: Arc<AtomicUsize>) -> Result<()> {
-    println!("  > {} ({})", dependency.name, dependency.version);
+    match generate_onboarding_plan(&dependency) {
+        Ok(plan) => {
+            println!("{}", format!("  ✓ {} ({})", dependency.name, dependency.version).green());
+            write_yaml_file(
+                &plan,
+                format!(
+                    "packages/{}-{}/onboard.yaml",
+                    dependency.name.replace("/", "-"),
+                    dependency.version.replace("/", "-"),
+                ).as_str()
+            )?;
+        },
+        Err(e) => {
+            println!("{}", format!("  × {} ({})", dependency.name, dependency.version).red());
+            println!("{}", format!("  × > {}", e).yellow());
 
-    if let Ok(plan) = generate_onboarding_plan(&dependency) {
-        write_yaml_file(
-            &plan,
-            format!(
-                "packages/{}-{}/onboard.yaml",
-                dependency.name.replace("/", "-"),
-                dependency.version.replace("/", "-"),
-            ).as_str()
-        )?;
-    }
-    else {
-        let plan: OnboardingPlan = OnboardingPlan::new(
-            dependency.name.clone(),
-            dependency.version.clone(),
-            dependency.license,
-            OnboardingSource::to_complete(),
-            format!("{}/edge", dependency.version),
-            Vec::new()
-        );
-        write_yaml_file(
-            &plan,
-            format!(
-                "to-complete/{}-{}.yaml",
-                dependency.name.replace("/", "-"),
-                dependency.version.replace("/", "-"),
-            ).as_str()
-        )?;
+            let plan: OnboardingPlan = OnboardingPlan::new(
+                dependency.name.clone(),
+                dependency.version.clone(),
+                dependency.license,
+                OnboardingSource::to_complete(),
+                format!("{}/edge", dependency.version),
+                Vec::new()
+            );
+            write_text_file(
+                &e.to_string(),
+                format!(
+                    "to-complete/{}-{}/logs.yaml",
+                    dependency.name.replace("/", "-"),
+                    dependency.version.replace("/", "-"),
+                ).as_str()
+            )?;
+            write_yaml_file(
+                &plan,
+                format!(
+                    "to-complete/{}-{}/onboard.yaml",
+                    dependency.name.replace("/", "-"),
+                    dependency.version.replace("/", "-"),
+                ).as_str()
+            )?;
 
-        nb_manual_requests.fetch_add(1, Ordering::Relaxed);
+            nb_manual_requests.fetch_add(1, Ordering::Relaxed);
+        },
     }
 
     Ok(())
@@ -86,7 +102,7 @@ fn generate_onboarding_plan(dependency: &Project) -> Result<OnboardingPlan> {
         dependency.name.clone(),
         dependency.version.clone(),
         dependency.license.clone(),
-        OnboardingSource::git(dependency.repository.clone(), dependency.version.clone()),
+        fetch_source(&dependency)?,
         format!("{}/edge", dependency.version),
         Vec::new(),
     );

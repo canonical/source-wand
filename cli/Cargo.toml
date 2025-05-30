@@ -14,3 +14,4 @@ source-wand-onboarding = { path = "../onboarding" }
 source-wand-dependency-tree = { path = "../dependency-tree" }
 source-wand-dependency-analysis = { path = "../dependency-analysis" }
 source-wand-common = { path = "../common" }
+colorize = "0.1.0"
