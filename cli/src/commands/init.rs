@@ -73,14 +73,6 @@ pub fn init_command(args: &InitArgs) -> Result<()> {
         }
     };
 
-    /*
-    let dependency_tree: DependencyTreeNode = find_dependency_tree(
-        DependencyTreeRequest::GitProject {
-            url: args.from_git.clone(),
-            branch: args.checkout.clone(),
-        }
-    ).map_err(|e| Error::msg(e))?;
-    */
     let nb_dependencies: usize = dependency_tree.flatten().dependencies.len();
     println!(" > {} unique dependencies were found in the project", nb_dependencies);
     println!(" > Saving dependency tree");
