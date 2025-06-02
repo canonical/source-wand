@@ -6,3 +6,7 @@ Cargo.lock
 **/*.rs.bk
 
 *.pdb
+
+packages/
+to-complete/
+dependencies.yaml
