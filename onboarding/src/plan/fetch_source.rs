@@ -43,7 +43,8 @@ pub fn fetch_source(project: &Project) -> Result<OnboardingSource> {
             branch.to_string()
         }
         else {
-            bail!("No tag or branch matches the package version")
+            project.version.to_string() 
+            //bail!("No tag or branch matches the package version")
         };
 
     Ok(OnboardingSource::git(project.repository.clone(), checkout))
