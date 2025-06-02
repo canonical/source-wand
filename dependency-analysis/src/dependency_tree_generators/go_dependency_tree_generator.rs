@@ -85,7 +85,16 @@ fn build_tree(
 
 fn parse_module(s: &str) -> (String, String) {
     if let Some((name, version)) = s.rsplit_once('@') {
-        (name.to_string(), version.to_string())
+        if let Some((_, version_2)) = s.split_once('-') {
+            if let Some((_, commit_hash)) = version_2.split_once('-') {
+                (name.to_string(), commit_hash[..6].to_string())
+            } else { // There's no timestamp/hash commit combo
+                (name.to_string(), version.to_string())
+            }
+        } else { // Standard Version (no extra "-")
+            (name.to_string(), version.to_string())
+        }
+        // (name.to_string(), version.to_string())
     } else {
         (s.to_string(), "".to_string())
     }
