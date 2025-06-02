@@ -1,6 +1,7 @@
 use std::{fs::create_dir_all, path::PathBuf};
 
 use anyhow::{bail, Result};
+use regex::Regex;
 use source_wand_common::{
     project::Project,
     project_manipulator::{
@@ -35,6 +36,10 @@ pub fn fetch_source(project: &Project) -> Result<OnboardingSource> {
         .filter_map(|branch| branch.split("\t").last())
         .collect();
 
+    let commit_hash_regex: Regex = Regex::new(r"^v\d+\.\d+\.\d+-\d{8}\d{6}-([a-f0-9]+)$")?;
+    let potential_commit_hash: Option<String> = commit_hash_regex.captures(project.version.as_str())
+        .and_then(|captures| captures.get(1).map(|part| part.as_str().to_string()));
+
     let checkout: String =
         if let Some(tag) = tags.iter().find(|tag| tag.contains(&project.version)) {
             tag.to_string()
@@ -42,9 +47,13 @@ pub fn fetch_source(project: &Project) -> Result<OnboardingSource> {
         else if let Some(branch) = branches.iter().find(|branch| branch.contains(&project.version)) {
             branch.to_string()
         }
+        else if let Some(potential_commit_hash) = potential_commit_hash {
+            project_manipulator.run_shell(format!("git clone --no-checkout {} .", project.repository))?;
+            project_manipulator.run_shell(format!("git checkout {}", potential_commit_hash))?;
+            potential_commit_hash
+        }
         else {
-            project.version.to_string() 
-            //bail!("No tag or branch matches the package version")
+            bail!("No tag, branch or commit matches the package version")
         };
 
     Ok(OnboardingSource::git(project.repository.clone(), checkout))
