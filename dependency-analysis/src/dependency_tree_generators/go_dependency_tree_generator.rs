@@ -1,7 +1,10 @@
 use std::collections::{HashMap, HashSet};
+use std::time::Duration;
+use std::thread::sleep;
 
 use anyhow::{Error, Result};
-use reqwest::blocking::get;
+use reqwest::blocking::{Client};
+use reqwest::StatusCode;
 use scraper::{Html, Selector};
 use source_wand_common::{project::Project, project_manipulator::project_manipulator::ProjectManipulator};
 
@@ -121,19 +124,43 @@ fn extract_repository_url(module_path: &str, cache: &mut HashMap<String, String>
 
 fn resolve_vanity_import(module_path: &str) -> Option<String> {
     let url: String = format!("https://{}?go-get=1", module_path);
+    let client = Client::new();
+    let max_retries = 3;
+    let base_delay = Duration::from_secs(1);
 
-    let document: Html = Html::parse_document(&get(&url).ok()?.text().ok()?);
-    let selector: Selector = Selector::parse(r#"meta[name="go-import"]"#).ok()?;
+    for attempt in 0..max_retries {
+        match client.get(&url).send() {
+            Ok(response) => {
+                if response.status() == StatusCode::TOO_MANY_REQUESTS {
+                    let delay = base_delay * 2u32.pow(attempt);
+                    sleep(delay);
+                    continue;
+                }
+                let text = response.text().ok()?;
+                let document: Html = Html::parse_document(&text);
+                let selector: Selector = Selector::parse(r#"meta[name="go-import"]"#).ok()?;
 
-    for element in document.select(&selector) {
-        if let Some(content) = element.value().attr("content") {
-            let parts: Vec<&str> = content.split_whitespace().collect();
+                for element in document.select(&selector) {
+                    if let Some(content) = element.value().attr("content") {
+                        let parts: Vec<&str> = content.split_whitespace().collect();
 
-            if parts.len() == 3 {
-                return Some(parts[2].to_string());
+                        if parts.len() == 3 {
+                            return Some(parts[2].to_string());
+                        }
+                    }
+                }
+            }
+            Err(e) => {
+                if attempt == max_retries - 1 {
+                    println!("Failed after {} retries: {}", max_retries, e);
+                    return None;
+                }
+                // Calculate delay with exponential backoff
+                let delay = base_delay * 2u32.pow(attempt);
+                println!("Request error, retrying in {:?}: {}", delay, e);
+                sleep(delay);
             }
         }
     }
-
     None
 }
