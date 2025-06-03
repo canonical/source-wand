@@ -45,12 +45,16 @@ pub fn generate_go_dependency_tree(
     for module in &all_modules {
         let (name, version) = parse_module(module);
         let repository_url: String = extract_repository_url(&name, &mut repository_cache);
+        let license: String = match find_license(&name) {
+            Some(license) => license,
+            None => format!("Proprietary"),
+        };
         project_cache.insert(
             module.clone(),
             Project::new(
                 name,
                 version,
-                "".to_string(),
+                license,
                 repository_url
             ),
         );
@@ -135,5 +139,41 @@ fn resolve_vanity_import(module_path: &str) -> Option<String> {
         }
     }
 
+    None
+}
+
+fn find_license(module_path: &str) -> Option<String> {
+    let url: String = format!("https://pkg.go.dev/{}?go-get=1", module_path);
+
+    let response = match get(&url) {
+        Ok (resp) => resp,
+        Err(e) => {
+            eprintln!("Failed to fetch URL {}: {}", url, e);
+            return None;
+        }
+    };
+    let html_text = match response.text() {
+        Ok(text) => text,
+        Err(e) => {
+            eprintln!("Failed to get HTML text: {}", e);
+            return None;
+        }
+    };
+
+    let document = Html::parse_document(&html_text);
+    // Create a selector for the span containing the license
+    let selector = Selector::parse("span").expect("Failed to parse selector");
+
+    // Find the license
+    for element in document.select(&selector) {
+        let text = element.text().collect::<Vec<_>>().join("");
+        if text.contains("License:") {
+            // Extract the license part after "License: "
+            let license = text.replace("License: ", "").trim().to_string();
+            return Some(license);
+        }
+    }
+
+    // Return None if no license is found
     None
 }
