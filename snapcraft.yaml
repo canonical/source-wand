@@ -32,6 +32,13 @@ base: core22
 confinement: strict
 
 parts:
+  go-toolchain:
+    plugin: nil
+    source: https://go.dev/dl/go1.22.3.linux-amd64.tar.gz
+    source-type: tar
+    override-build: |
+      mkdir -p $SNAPCRAFT_PART_INSTALL/go-toolchain
+      cp -r $SNAPCRAFT_PART_SRC/* $SNAPCRAFT_PART_INSTALL/go-toolchain/
   rust-deps:
     plugin: nil
     build-packages:
@@ -50,6 +57,9 @@ parts:
 apps:
   source-wand:
     command: bin/source-wand
+    environment:
+      PATH: $SNAP/go-toolchain/bin:$PATH
+      GOROOT: $SNAP/go-toolchain
     plugs:
       - home
-
+      - network
