@@ -36,15 +36,19 @@ pub fn fetch_source(project: &Project) -> Result<OnboardingSource> {
         .filter_map(|branch| branch.split("\t").last())
         .collect();
 
-    let commit_hash_regex: Regex = Regex::new(r"^v\d+\.\d+\.\d+-\d{8}\d{6}-([a-f0-9]+)$")?;
-    let potential_commit_hash: Option<String> = commit_hash_regex.captures(project.version.as_str())
-        .and_then(|captures| captures.get(1).map(|part| part.as_str().to_string()));
+    let commit_hash_regex = Regex::new(
+        r"^v\d+\.\d+\.\d+(?:-[^+]+)?-(\d{14})-([a-f0-9]+)(?:\+incompatible)?$"
+    )?;
+    let potential_commit_hash: Option<String> = commit_hash_regex
+        .captures(project.version.as_str())
+        .and_then(|captures| captures.get(2).map(|part| part.as_str().to_string()));
 
+    let version_tag: &str = project.version.split('+').next().unwrap_or(&project.version);
     let checkout: String =
-        if let Some(tag) = tags.iter().find(|tag| tag.contains(&project.version)) {
+        if let Some(tag) = tags.iter().find(|tag| tag.contains(version_tag)) {
             tag.to_string()
         }
-        else if let Some(branch) = branches.iter().find(|branch| branch.contains(&project.version)) {
+        else if let Some(branch) = branches.iter().find(|branch| branch.contains(version_tag)) {
             branch.to_string()
         }
         else if let Some(potential_commit_hash) = potential_commit_hash {
