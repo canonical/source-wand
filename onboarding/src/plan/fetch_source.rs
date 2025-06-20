@@ -22,7 +22,7 @@ pub fn fetch_source(project: &Project) -> Result<OnboardingSource> {
     );
     create_dir_all(&project_directory)?;
 
-    let project_manipulator: LocalProjectManipulator = LocalProjectManipulator::new(project_directory);
+    let project_manipulator: LocalProjectManipulator = LocalProjectManipulator::new(project_directory, false);
 
     let tags_raw: String = project_manipulator.run_shell(format!("git ls-remote --tags {}", project.repository))?;
     let tags: Vec<&str> = tags_raw.lines()

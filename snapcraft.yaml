@@ -50,6 +50,10 @@ parts:
     build-packages:
       - libssl-dev
       - pkg-config
+    stage-packages:
+      - git
+      - curl
+      - ca-certificates
     source: .
     after: [rust-deps]
     rust-path: ["cli"]
@@ -59,6 +63,7 @@ apps:
     command: bin/source-wand
     environment:
       PATH: $SNAP/go-toolchain/bin:$PATH
+      GIT_EXEC_PATH: $SNAP/usr/lib/git-core
       GOROOT: $SNAP/go-toolchain
     plugs:
       - home
