@@ -44,7 +44,9 @@ parts:
     build-packages:
       - curl
     override-pull: |
-      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+      export CARGO_HOME=$SNAPCRAFT_PART_INSTALL/rust/cargo
+      export RUSTUP_HOME=$SNAPCRAFT_PART_INSTALL/rust/rustup
+      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
   source-wand:
     plugin: rust
     build-packages:
@@ -62,9 +64,15 @@ apps:
   source-wand:
     command: bin/source-wand
     environment:
-      PATH: $SNAP/go-toolchain/bin:$PATH
+      PATH: $SNAP/rust/cargo/bin:$SNAP/go-toolchain/bin:$PATH
+
       GIT_EXEC_PATH: $SNAP/usr/lib/git-core
+
+      CARGO_HOME: $SNAP_USER_DATA/.cargo
+      RUSTUP_HOME: $SNAP_USER_DATA/.rustup
+
       GOROOT: $SNAP/go-toolchain
+
     plugs:
       - home
       - network
