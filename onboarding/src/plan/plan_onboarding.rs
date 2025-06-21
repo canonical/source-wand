@@ -11,7 +11,10 @@ use source_wand_common::{
         write_yaml_file::write_yaml_file
     }
 };
-use source_wand_dependency_analysis::dependency_tree_node::DependencyTreeNode;
+use source_wand_dependency_analysis::{
+    // dependency_tree_node::DependencyTreeNode,
+    unique_dependencies_list::UniqueDependenciesList
+};
 use tokio::runtime::Runtime;
 
 use crate::plan::{
@@ -27,12 +30,13 @@ pub fn plan_onboarding() -> Result<usize> {
 }
 
 async fn plan_onboarding_async() -> Result<usize> {
-    let dependency_tree: DependencyTreeNode = read_yaml_file("dependencies.yaml")?;
+    // let dependency_tree: DependencyTreeNode = read_yaml_file("dependencies.yaml")?;
+    let build_requirements: UniqueDependenciesList = read_yaml_file("build-requirements.yaml")?;
+
     let nb_manual_requests: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
 
     println!(" > Generating onboarding plans for each dependency");
-    let tasks = dependency_tree
-        .flatten()
+    let tasks = build_requirements
         .dependencies
         .into_iter()
         .map(|dependency| {
