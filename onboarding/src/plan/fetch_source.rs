@@ -24,6 +24,11 @@ pub fn fetch_source(project: &Project) -> Result<OnboardingSource> {
 
     let project_manipulator: LocalProjectManipulator = LocalProjectManipulator::new(project_directory, false);
 
+    let short_name: &str = match project.name.split("/").last() {
+        Some(short_name) => short_name,
+        None => project.name.as_str(),
+    };
+
     let tags_raw: String = project_manipulator.run_shell(format!("git ls-remote --tags {}", project.repository))?;
     let tags: Vec<&str> = tags_raw.lines()
         .into_iter()
@@ -42,9 +47,15 @@ pub fn fetch_source(project: &Project) -> Result<OnboardingSource> {
         .captures(project.version.as_str())
         .and_then(|captures| captures.get(2).map(|part| part.as_str().to_string()));
 
+    let mut path: Option<String> = None;
+
     let version_tag: &str = project.version.split('+').next().unwrap_or(&project.version);
     let checkout: String =
-        if let Some(tag) = tags.iter().find(|tag| tag.contains(version_tag)) {
+        if let Some(tag) = tags.iter().find(|tag| tag.contains(&format!("{}/{}", short_name, version_tag))) {
+            path = Some(short_name.to_string());
+            tag.to_string()
+        }
+        else if let Some(tag) = tags.iter().find(|tag| tag.contains(version_tag)) {
             tag.to_string()
         }
         else if let Some(branch) = branches.iter().find(|branch| branch.contains(version_tag)) {
@@ -59,5 +70,8 @@ pub fn fetch_source(project: &Project) -> Result<OnboardingSource> {
             bail!("No tag, branch or commit matches the package version")
         };
 
-    Ok(OnboardingSource::git(project.repository.clone(), checkout))
+    match path {
+        Some(path) => Ok(OnboardingSource::git_monorepository(project.repository.clone(), path, checkout)),
+        None => Ok(OnboardingSource::git(project.repository.clone(), checkout)),
+    }
 }
