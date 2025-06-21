@@ -30,9 +30,8 @@ pub fn fetch_source(project: &Project) -> Result<OnboardingSource> {
         .filter_map(|tag| tag.split("\t").last())
         .collect();
 
-    let branches_raw: String = project_manipulator.run_shell(format!("git ls-remote --branches {}", project.repository))?;
+    let branches_raw: String = project_manipulator.run_shell(format!("git ls-remote --heads {}", project.repository))?;
     let branches: Vec<&str> = branches_raw.lines()
-        .skip(1)
         .filter_map(|branch| branch.split("\t").last())
         .collect();
 
