@@ -2,6 +2,12 @@
 Source Wand is a tool that helps you analyze and mirror source code.
 
 # Usage
+## Install using Snap
+```bash
+sudo snap install source-wand --edge
+```
+⚠️ Note that the snap has confinment issues, the only fully supported language is currently Go. Other languages may work, but need to be certified.
+
 ## Dependency analysis
 Generate dependency tree of local directory.
 ```bash
