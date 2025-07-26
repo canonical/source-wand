@@ -18,13 +18,13 @@ pub fn generate_build_requirements(
 ) -> Result<UniqueDependenciesList> {
     match build_system {
         // BuildSystemIdentity::RustCargo => {
-            //     generate_rust_cargo_dependency_tree(project_manipulator)
-            // },
-            // BuildSystemIdentity::PythonPip => {
-                //     generate_python_pip_dependency_tree(project_manipulator)
-                // },
-                // BuildSystemIdentity::JavaMaven => {
-                    //     generate_java_maven_dependency_tree(project_manipulator)
+        //     generate_rust_cargo_build_requirements(project_manipulator, dependency_tree)
+        // },
+        // BuildSystemIdentity::PythonPip => {
+        //     generate_python_pip_build_requirements(project_manipulator, dependency_tree)
+        // },
+        // BuildSystemIdentity::JavaMaven => {
+        //     generate_java_maven_build_requirements(project_manipulator, dependency_tree)
         // },
         BuildSystemIdentity::Go => {
             generate_go_build_requirements(project_manipulator, dependency_tree)

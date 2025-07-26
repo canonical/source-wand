@@ -13,7 +13,7 @@ pub fn generate_python_pip_dependency_tree(project_manipulator: &AnyProjectManip
         DepthAnnotatedDependencyTreeNode {
             depth: 0,
             node: DependencyTreeNode::new(
-                Project::new(root_name, String::new(), String::new(), String::new()),
+                Project::new(root_name, String::new(), String::new(), String::new(), None, None),
                 Vec::new(),
             )
         }
@@ -65,7 +65,7 @@ pub fn generate_python_pip_dependency_tree(project_manipulator: &AnyProjectManip
         let repository: String = String::new();
 
         let node: DependencyTreeNode = DependencyTreeNode::new(
-            Project::new(name, version, license, repository),
+            Project::new(name, version, license, repository, None, None),
             Vec::new(),
         );
 

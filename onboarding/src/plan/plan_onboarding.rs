@@ -12,8 +12,7 @@ use source_wand_common::{
     }
 };
 use source_wand_dependency_analysis::{
-    // dependency_tree_node::DependencyTreeNode,
-    unique_dependencies_list::UniqueDependenciesList
+    dependency_tree_map::DependencyTreeMap, dependency_tree_node::DependencyTreeNode, unique_dependencies_list::UniqueDependenciesList
 };
 use tokio::runtime::Runtime;
 
@@ -30,7 +29,7 @@ pub fn plan_onboarding() -> Result<usize> {
 }
 
 async fn plan_onboarding_async() -> Result<usize> {
-    // let dependency_tree: DependencyTreeNode = read_yaml_file("dependencies.yaml")?;
+    let dependency_tree_map: Arc<DependencyTreeMap> = Arc::new(read_yaml_file::<DependencyTreeNode>("dependencies.yaml")?.to_map());
     let build_requirements: UniqueDependenciesList = read_yaml_file("build-requirements.yaml")?;
 
     let nb_manual_requests: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
@@ -41,8 +40,9 @@ async fn plan_onboarding_async() -> Result<usize> {
         .into_iter()
         .map(|dependency| {
             let nb_manual_requests: Arc<AtomicUsize> = Arc::clone(&nb_manual_requests);
+            let dependency_tree_map: Arc<DependencyTreeMap> = Arc::clone(&dependency_tree_map);
             tokio::spawn(async move {
-                plan_dependency_onboarding(dependency, nb_manual_requests).await
+                plan_dependency_onboarding(dependency, dependency_tree_map, nb_manual_requests).await
             })
         })
         .collect::<Vec<_>>();
@@ -52,8 +52,12 @@ async fn plan_onboarding_async() -> Result<usize> {
     Ok(nb_manual_requests.load(Ordering::Relaxed))
 }
 
-async fn plan_dependency_onboarding(dependency: Project, nb_manual_requests: Arc<AtomicUsize>) -> Result<()> {
-    match generate_onboarding_plan(&dependency) {
+async fn plan_dependency_onboarding(
+    dependency: Project,
+    dependency_tree_map: Arc<DependencyTreeMap>,
+    nb_manual_requests: Arc<AtomicUsize>
+) -> Result<()> {
+    match generate_onboarding_plan(&dependency, &dependency_tree_map) {
         Ok(plan) => {
             println!("{}", format!("  ✓ {} ({})", dependency.name, dependency.version).green());
             write_yaml_file(
@@ -101,14 +105,21 @@ async fn plan_dependency_onboarding(dependency: Project, nb_manual_requests: Arc
     Ok(())
 }
 
-fn generate_onboarding_plan(dependency: &Project) -> Result<OnboardingPlan> {
+fn generate_onboarding_plan(dependency: &Project, dependency_tree_map: &DependencyTreeMap) -> Result<OnboardingPlan> {
+    let dependencies: Vec<String> = dependency_tree_map
+        .get(&format!("{}-{}", dependency.name, dependency.version))
+        .unwrap_or(&Vec::new())
+        .iter()
+        .map(|dependency| format!("{}-{}", dependency.name, dependency.version))
+        .collect();
+
     let plan: OnboardingPlan = OnboardingPlan::new(
         dependency.name.clone(),
         dependency.version.clone(),
         dependency.license.clone(),
         fetch_source(&dependency)?,
         format!("{}/edge", dependency.version),
-        Vec::new(),
+        dependencies,
     );
     Ok(plan)
 }

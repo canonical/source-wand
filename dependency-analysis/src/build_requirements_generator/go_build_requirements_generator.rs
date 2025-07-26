@@ -42,7 +42,9 @@ pub fn generate_go_build_requirements(
                         requirement.name.clone(),
                         requirement.version.clone(),
                         dependency.license.clone(),
-                        dependency.repository.clone()
+                        dependency.repository.clone(),
+                        dependency.subdirectory.clone(),
+                        dependency.checkout.clone(),
                     )
                 )
             }

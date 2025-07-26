@@ -19,6 +19,7 @@ use uuid::Uuid;
 use crate::{build_requirements_generator::generate_build_requirements, unique_dependencies_list::UniqueDependenciesList};
 
 pub mod dependency_tree_node;
+pub mod dependency_tree_map;
 pub mod unique_dependencies_list;
 
 pub mod dependency_tree_request;
@@ -59,9 +60,6 @@ pub fn find_dependency_tree(request: DependencyTreeRequest) -> Result<Dependency
             manipulator.to_any()
         },
         _ => { todo!() },
-        // DependencyTreeRequest::NameBased { name, version } => {
-        //     todo!()
-        // },
     };
     
     let build_system: BuildSystemIdentity = identify_build_system(&project_manipulator)?;
@@ -107,9 +105,6 @@ pub fn find_build_requirements(request: DependencyTreeRequest, dependency_tree: 
             manipulator.to_any()
         },
         _ => { todo!() },
-        // DependencyTreeRequest::NameBased { name, version } => {
-        //     todo!()
-        // },
     };
     
     let build_system: BuildSystemIdentity = identify_build_system(&project_manipulator)?;

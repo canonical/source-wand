@@ -1,9 +1,15 @@
-use std::collections::{HashMap, HashSet};
+use std::{collections::{HashMap, HashSet}, path::PathBuf, str::FromStr};
 
 use anyhow::{Error, Result};
 use reqwest::blocking::get;
 use scraper::{Html, Selector};
-use source_wand_common::{project::Project, project_manipulator::project_manipulator::ProjectManipulator};
+use source_wand_common::{
+    project::Project,
+    project_manipulator::{
+        local_project_manipulator::LocalProjectManipulator,
+        project_manipulator::ProjectManipulator
+    }
+};
 
 use crate::dependency_tree_node::DependencyTreeNode;
 
@@ -45,13 +51,22 @@ pub fn generate_go_dependency_tree(
     for module in &all_modules {
         let (name, version) = parse_module(module);
         let repository_url: String = extract_repository_url(&name, &mut repository_cache);
+
+        // let (checkout, subdirectory) = match fetch_checkout(&name, &version, &repository_url) {
+        //     Ok((checkout, subdirectory)) => (checkout, subdirectory),
+        //     Err(_) => (None, None),
+        // };
+        let (checkout, subdirectory) = (None, None);
+
         project_cache.insert(
             module.clone(),
             Project::new(
                 name,
                 version,
                 "".to_string(),
-                repository_url
+                repository_url,
+                subdirectory,
+                checkout,
             ),
         );
     }
@@ -136,4 +151,43 @@ fn resolve_vanity_import(module_path: &str) -> Option<String> {
     }
 
     None
+}
+
+pub fn fetch_checkout(name: &String, version: &String, repository: &String) -> Result<(Option<String>, Option<String>)> {
+    let project_manipulator: LocalProjectManipulator = LocalProjectManipulator::new(PathBuf::from_str("/")?, false);
+    let short_name: &str = match name.split("/").last() {
+        Some(short_name) => short_name,
+        None => name.as_str(),
+    };
+
+    let tags_raw: String = project_manipulator.run_shell(format!("git ls-remote --tags {}", repository))?;
+    let tags: Vec<&str> = tags_raw.lines()
+        .into_iter()
+        .filter_map(|tag| tag.split("\t").last())
+        .collect();
+
+    let branches_raw: String = project_manipulator.run_shell(format!("git ls-remote --heads {}", repository))?;
+    let branches: Vec<&str> = branches_raw.lines()
+        .filter_map(|branch| branch.split("\t").last())
+        .collect();
+
+    let mut path: Option<String> = None;
+
+    let version_tag: &str = version.split('+').next().unwrap_or(&version);
+    let checkout: Option<String> =
+        if let Some(tag) = tags.iter().find(|tag| tag.contains(&format!("{}/{}", short_name, version_tag))) {
+            path = Some(short_name.to_string());
+            Some(tag.to_string())
+        }
+        else if let Some(tag) = tags.iter().find(|tag| tag.contains(version_tag)) {
+            Some(tag.to_string())
+        }
+        else if let Some(branch) = branches.iter().find(|branch| branch.contains(version_tag)) {
+            Some(branch.to_string())
+        }
+        else {
+            None
+        };
+
+    Ok((checkout, path))
 }
