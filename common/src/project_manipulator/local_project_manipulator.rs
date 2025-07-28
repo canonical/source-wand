@@ -7,11 +7,12 @@ use super::project_manipulator::ProjectManipulator;
 #[derive(Debug, Clone)]
 pub struct LocalProjectManipulator {
     pub project_root: PathBuf,
+    pub should_cleanup: bool,
 }
 
 impl LocalProjectManipulator {
-    pub fn new(project_root: PathBuf) -> Self {
-        LocalProjectManipulator { project_root }
+    pub fn new(project_root: PathBuf, should_cleanup: bool) -> Self {
+        LocalProjectManipulator { project_root, should_cleanup }
     }
 }
 
@@ -36,5 +37,14 @@ impl ProjectManipulator for LocalProjectManipulator {
         self.to_any().try_run_shell(command, retries)
     }
     
-    fn cleanup(&self) {}
+    fn cleanup(&self) {
+        if self.should_cleanup {
+            let _ = self.run_shell(
+                format!(
+                    "rm -R {}",
+                    self.project_root.as_os_str().to_str().unwrap_or_default()
+                )
+            );
+        }
+    }
 }

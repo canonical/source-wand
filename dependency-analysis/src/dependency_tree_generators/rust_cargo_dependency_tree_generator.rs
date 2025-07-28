@@ -24,7 +24,7 @@ pub fn generate_rust_cargo_dependency_tree(project_manipulator: &AnyProjectManip
         let repository: String = tokens[3].clone();
 
         let node: DependencyTreeNode = DependencyTreeNode::new(
-            Project::new(name, version, license, repository),
+            Project::new(name, version, license, repository, None, None),
             Vec::new(),
         );
 

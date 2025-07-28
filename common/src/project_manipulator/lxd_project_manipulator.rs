@@ -26,7 +26,7 @@ impl LxdProjectManipulator {
     }
 
     fn machine_exists(machine_name: &String) -> bool {
-        let local: LocalProjectManipulator = LocalProjectManipulator::new(PathBuf::from_str("/").unwrap());
+        let local: LocalProjectManipulator = LocalProjectManipulator::new(PathBuf::from_str("/").unwrap(), false);
         let lxc_machine: String = local.run_shell(format!("lxc list --format json | jq '.[] | .name' | grep \"^\\\"{}\\\"$\"", machine_name))
                                        .unwrap_or_default()
                                        .trim()
@@ -36,7 +36,7 @@ impl LxdProjectManipulator {
     }
 
     fn create_machine(machine_name: &String, base: &str) -> Result<()> {
-        let local: LocalProjectManipulator = LocalProjectManipulator::new(PathBuf::from_str("/").unwrap());
+        let local: LocalProjectManipulator = LocalProjectManipulator::new(PathBuf::from_str("/").unwrap(), false);
         let response: Result<()> = local.run_shell(format!("lxc launch {} {}", base, machine_name))
             .map(|_| ());
 

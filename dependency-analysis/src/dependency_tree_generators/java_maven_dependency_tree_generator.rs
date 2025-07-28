@@ -62,7 +62,7 @@ fn parse_project(raw: &String) -> Project {
     let license: String = String::new();
     let repository: String = String::new();
 
-    Project::new(name, version, license, repository)
+    Project::new(name, version, license, repository, None, None)
 }
 
 fn compute_branch_depth(branch: &String) -> (String, u32) {

@@ -22,7 +22,12 @@ pub fn fetch_source(project: &Project) -> Result<OnboardingSource> {
     );
     create_dir_all(&project_directory)?;
 
-    let project_manipulator: LocalProjectManipulator = LocalProjectManipulator::new(project_directory);
+    let project_manipulator: LocalProjectManipulator = LocalProjectManipulator::new(project_directory, false);
+
+    let short_name: &str = match project.name.split("/").last() {
+        Some(short_name) => short_name,
+        None => project.name.as_str(),
+    };
 
     let tags_raw: String = project_manipulator.run_shell(format!("git ls-remote --tags {}", project.repository))?;
     let tags: Vec<&str> = tags_raw.lines()
@@ -30,21 +35,30 @@ pub fn fetch_source(project: &Project) -> Result<OnboardingSource> {
         .filter_map(|tag| tag.split("\t").last())
         .collect();
 
-    let branches_raw: String = project_manipulator.run_shell(format!("git ls-remote --branches {}", project.repository))?;
+    let branches_raw: String = project_manipulator.run_shell(format!("git ls-remote --heads {}", project.repository))?;
     let branches: Vec<&str> = branches_raw.lines()
-        .skip(1)
         .filter_map(|branch| branch.split("\t").last())
         .collect();
 
-    let commit_hash_regex: Regex = Regex::new(r"^v\d+\.\d+\.\d+-\d{8}\d{6}-([a-f0-9]+)$")?;
-    let potential_commit_hash: Option<String> = commit_hash_regex.captures(project.version.as_str())
-        .and_then(|captures| captures.get(1).map(|part| part.as_str().to_string()));
+    let commit_hash_regex = Regex::new(
+        r"^v\d+\.\d+\.\d+(?:-[^+]+)?-(\d{14})-([a-f0-9]+)(?:\+incompatible)?$"
+    )?;
+    let potential_commit_hash: Option<String> = commit_hash_regex
+        .captures(project.version.as_str())
+        .and_then(|captures| captures.get(2).map(|part| part.as_str().to_string()));
 
+    let mut path: Option<String> = None;
+
+    let version_tag: &str = project.version.split('+').next().unwrap_or(&project.version);
     let checkout: String =
-        if let Some(tag) = tags.iter().find(|tag| tag.contains(&project.version)) {
+        if let Some(tag) = tags.iter().find(|tag| tag.contains(&format!("{}/{}", short_name, version_tag))) {
+            path = Some(short_name.to_string());
             tag.to_string()
         }
-        else if let Some(branch) = branches.iter().find(|branch| branch.contains(&project.version)) {
+        else if let Some(tag) = tags.iter().find(|tag| tag.contains(version_tag)) {
+            tag.to_string()
+        }
+        else if let Some(branch) = branches.iter().find(|branch| branch.contains(version_tag)) {
             branch.to_string()
         }
         else if let Some(potential_commit_hash) = potential_commit_hash {
@@ -56,5 +70,8 @@ pub fn fetch_source(project: &Project) -> Result<OnboardingSource> {
             bail!("No tag, branch or commit matches the package version")
         };
 
-    Ok(OnboardingSource::git(project.repository.clone(), checkout))
+    match path {
+        Some(path) => Ok(OnboardingSource::git_monorepository(project.repository.clone(), path, checkout)),
+        None => Ok(OnboardingSource::git(project.repository.clone(), checkout)),
+    }
 }

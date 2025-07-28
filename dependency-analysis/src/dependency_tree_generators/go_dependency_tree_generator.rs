@@ -1,9 +1,15 @@
-use std::collections::{HashMap, HashSet};
+use std::{collections::{HashMap, HashSet}, path::PathBuf, str::FromStr};
 
 use anyhow::{Error, Result};
-use reqwest::blocking::get;
+use reqwest::blocking::{get, Response};
 use scraper::{Html, Selector};
-use source_wand_common::{project::Project, project_manipulator::project_manipulator::ProjectManipulator};
+use source_wand_common::{
+    project::Project,
+    project_manipulator::{
+        local_project_manipulator::LocalProjectManipulator,
+        project_manipulator::ProjectManipulator
+    }
+};
 
 use crate::dependency_tree_node::DependencyTreeNode;
 
@@ -47,15 +53,24 @@ pub fn generate_go_dependency_tree(
         let repository_url: String = extract_repository_url(&name, &mut repository_cache);
         let license: String = match find_license(&name) {
             Some(license) => license,
-            None => format!("Proprietary"),
+            None => format!("unknown"),
         };
+
+        // let (checkout, subdirectory) = match fetch_checkout(&name, &version, &repository_url) {
+        //     Ok((checkout, subdirectory)) => (checkout, subdirectory),
+        //     Err(_) => (None, None),
+        // };
+        let (checkout, subdirectory) = (None, None);
+
         project_cache.insert(
             module.clone(),
             Project::new(
                 name,
                 version,
                 license,
-                repository_url
+                repository_url,
+                subdirectory,
+                checkout,
             ),
         );
     }
@@ -145,14 +160,14 @@ fn resolve_vanity_import(module_path: &str) -> Option<String> {
 fn find_license(module_path: &str) -> Option<String> {
     let url: String = format!("https://pkg.go.dev/{}?go-get=1", module_path);
 
-    let response = match get(&url) {
+    let response: Response = match get(&url) {
         Ok (resp) => resp,
         Err(e) => {
             eprintln!("Failed to fetch URL {}: {}", url, e);
             return None;
         }
     };
-    let html_text = match response.text() {
+    let html_text: String = match response.text() {
         Ok(text) => text,
         Err(e) => {
             eprintln!("Failed to get HTML text: {}", e);
@@ -160,20 +175,55 @@ fn find_license(module_path: &str) -> Option<String> {
         }
     };
 
-    let document = Html::parse_document(&html_text);
-    // Create a selector for the span containing the license
-    let selector = Selector::parse("span").expect("Failed to parse selector");
+    let document: Html = Html::parse_document(&html_text);
+    let selector: Selector = Selector::parse("span").expect("Failed to parse selector");
 
-    // Find the license
     for element in document.select(&selector) {
         let text = element.text().collect::<Vec<_>>().join("");
         if text.contains("License:") {
-            // Extract the license part after "License: "
             let license = text.replace("License: ", "").trim().to_string();
             return Some(license);
         }
     }
 
-    // Return None if no license is found
     None
+}
+
+pub fn fetch_checkout(name: &String, version: &String, repository: &String) -> Result<(Option<String>, Option<String>)> {
+    let project_manipulator: LocalProjectManipulator = LocalProjectManipulator::new(PathBuf::from_str("/")?, false);
+    let short_name: &str = match name.split("/").last() {
+        Some(short_name) => short_name,
+        None => name.as_str(),
+    };
+
+    let tags_raw: String = project_manipulator.run_shell(format!("git ls-remote --tags {}", repository))?;
+    let tags: Vec<&str> = tags_raw.lines()
+        .into_iter()
+        .filter_map(|tag| tag.split("\t").last())
+        .collect();
+
+    let branches_raw: String = project_manipulator.run_shell(format!("git ls-remote --heads {}", repository))?;
+    let branches: Vec<&str> = branches_raw.lines()
+        .filter_map(|branch| branch.split("\t").last())
+        .collect();
+
+    let mut path: Option<String> = None;
+
+    let version_tag: &str = version.split('+').next().unwrap_or(&version);
+    let checkout: Option<String> =
+        if let Some(tag) = tags.iter().find(|tag| tag.contains(&format!("{}/{}", short_name, version_tag))) {
+            path = Some(short_name.to_string());
+            Some(tag.to_string())
+        }
+        else if let Some(tag) = tags.iter().find(|tag| tag.contains(version_tag)) {
+            Some(tag.to_string())
+        }
+        else if let Some(branch) = branches.iter().find(|branch| branch.contains(version_tag)) {
+            Some(branch.to_string())
+        }
+        else {
+            None
+        };
+
+    Ok((checkout, path))
 }

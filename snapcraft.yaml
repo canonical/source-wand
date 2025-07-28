@@ -1,5 +1,5 @@
 name: source-wand
-version: 1.0.1
+version: 0.0.1
 summary: CLI tool that helps with large scale manipulations of source code
 description: |
   `source-wand` is a CLI tool that helps with large scale manipulations of source code.
@@ -32,17 +32,30 @@ base: core22
 confinement: strict
 
 parts:
+  go-toolchain:
+    plugin: nil
+    source: https://go.dev/dl/go1.22.3.linux-amd64.tar.gz
+    source-type: tar
+    override-build: |
+      mkdir -p $SNAPCRAFT_PART_INSTALL/go-toolchain
+      cp -r $SNAPCRAFT_PART_SRC/* $SNAPCRAFT_PART_INSTALL/go-toolchain/
   rust-deps:
     plugin: nil
     build-packages:
       - curl
     override-pull: |
-      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+      export CARGO_HOME=$SNAPCRAFT_PART_INSTALL/rust/cargo
+      export RUSTUP_HOME=$SNAPCRAFT_PART_INSTALL/rust/rustup
+      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
   source-wand:
     plugin: rust
     build-packages:
       - libssl-dev
       - pkg-config
+    stage-packages:
+      - git
+      - curl
+      - ca-certificates
     source: .
     after: [rust-deps]
     rust-path: ["cli"]
@@ -50,6 +63,16 @@ parts:
 apps:
   source-wand:
     command: bin/source-wand
+    environment:
+      PATH: $SNAP/rust/cargo/bin:$SNAP/go-toolchain/bin:$PATH
+
+      GIT_EXEC_PATH: $SNAP/usr/lib/git-core
+
+      CARGO_HOME: $SNAP_USER_DATA/.cargo
+      RUSTUP_HOME: $SNAP_USER_DATA/.rustup
+
+      GOROOT: $SNAP/go-toolchain
+
     plugs:
       - home
-
+      - network
