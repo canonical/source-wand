@@ -1,8 +1,12 @@
+use std::path::PathBuf;
+
 use anyhow::{Error, Result};
 
-use crate::dependency_ensurer::required_dependency::{
-    AnyRequiredDependency,
-    RequiredDependency
+use crate::{
+    dependency_ensurer::required_dependency::{
+        AnyRequiredDependency,
+        RequiredDependency
+    }
 };
 
 use super::{
@@ -13,6 +17,7 @@ use super::{
 pub trait ProjectManipulator {
     fn run_shell(&self, command: String) -> Result<String>;
     fn try_run_shell(&self, command: String, retries: u32) -> Result<String>;
+    fn get_working_directory(&self) -> PathBuf;
     fn cleanup(&self);
 }
 
@@ -61,7 +66,18 @@ impl ProjectManipulator for AnyProjectManipulator {
 
         Err(error)
     }
-    
+
+    fn get_working_directory(&self) -> PathBuf {
+        match self {
+            AnyProjectManipulator::LocalManipulator(project_manipulator) => {
+                project_manipulator.get_working_directory()
+            },
+            AnyProjectManipulator::LxdManipulator(project_manipulator) => {
+                project_manipulator.get_working_directory()
+            },
+        }
+    }
+
     fn cleanup(&self) {
         match self {
             AnyProjectManipulator::LocalManipulator(project_manipulator) => {

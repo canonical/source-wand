@@ -36,7 +36,11 @@ impl ProjectManipulator for LocalProjectManipulator {
     fn try_run_shell(&self, command: String, retries: u32) -> Result<String> {
         self.to_any().try_run_shell(command, retries)
     }
-    
+
+    fn get_working_directory(&self) -> PathBuf {
+        self.project_root.clone()
+    }
+
     fn cleanup(&self) {
         if self.should_cleanup {
             let _ = self.run_shell(

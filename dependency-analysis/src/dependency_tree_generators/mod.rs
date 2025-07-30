@@ -1,12 +1,9 @@
 use anyhow::Result;
-use java_maven_dependency_tree_generator::generate_java_maven_dependency_tree;
-use go_dependency_tree_generator::generate_go_dependency_tree;
-use python_pip_dependency_tree_generator::generate_python_pip_dependency_tree;
 use source_wand_common::project_manipulator::project_manipulator::AnyProjectManipulator;
-use rust_cargo_dependency_tree_generator::generate_rust_cargo_dependency_tree;
 
 use crate::{
     build_systems::build_system_identity::BuildSystemIdentity,
+    dependency_tree_generators::cdxgen_dependency_tree_generator::generate_cdxgen_dependency_tree,
     dependency_tree_node::DependencyTreeNode
 };
 
@@ -15,22 +12,31 @@ pub mod python_pip_dependency_tree_generator;
 pub mod java_maven_dependency_tree_generator;
 pub mod go_dependency_tree_generator;
 
+pub mod cdxgen_dependency_tree_generator;
+pub mod cdxgen_rust_dependency_tree_generator;
+pub mod cdxgen_python_dependency_tree_generator;
+pub mod cdxgen_java_dependency_tree_generator;
+pub mod cdxgen_go_dependency_tree_generator;
+
 pub fn generate_dependency_tree(
     build_system: BuildSystemIdentity,
     project_manipulator: &AnyProjectManipulator
 ) -> Result<DependencyTreeNode> {
     match build_system {
         BuildSystemIdentity::RustCargo => {
-            generate_rust_cargo_dependency_tree(project_manipulator)
+            generate_cdxgen_dependency_tree(project_manipulator, Some("rust"))
         },
         BuildSystemIdentity::PythonPip => {
-            generate_python_pip_dependency_tree(project_manipulator)
+            generate_cdxgen_dependency_tree(project_manipulator, Some("python"))
         },
         BuildSystemIdentity::JavaMaven => {
-            generate_java_maven_dependency_tree(project_manipulator)
+            generate_cdxgen_dependency_tree(project_manipulator, Some("java"))
         },
         BuildSystemIdentity::Go => {
-            generate_go_dependency_tree(project_manipulator)
+            generate_cdxgen_dependency_tree(project_manipulator, Some("go"))
         },
+        BuildSystemIdentity::Unknown => {
+            generate_cdxgen_dependency_tree(project_manipulator, None)
+        }
     }
 }

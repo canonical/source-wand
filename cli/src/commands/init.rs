@@ -46,7 +46,7 @@ pub struct NameDependenciesArgs {
 }
 
 
-pub fn init_command(args: &InitArgs) -> Result<()> {
+pub fn _init_command(args: &InitArgs) -> Result<()> {
     println!("Planning project onboarding");
 
     println!(" > Generating dependency tree");

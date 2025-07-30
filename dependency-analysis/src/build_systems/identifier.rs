@@ -1,4 +1,4 @@
-use anyhow::{Error, Result};
+use anyhow::{Ok, Result};
 use source_wand_common::project_manipulator::project_manipulator::{AnyProjectManipulator, ProjectManipulator};
 
 use super::build_system_identity::BuildSystemIdentity;
@@ -20,5 +20,7 @@ pub fn identify_build_system(project_manipulator: &AnyProjectManipulator) -> Res
         return Ok(BuildSystemIdentity::Go)
     }
 
-    Err(Error::msg("Unable to identify the build system of the project.".to_string()))
+    return Ok(BuildSystemIdentity::Unknown)
+
+    // Err(Error::msg("Unable to identify the build system of the project.".to_string()))
 }
