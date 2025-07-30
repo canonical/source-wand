@@ -9,3 +9,9 @@ pub struct Package {
     pub destination: PackageDestination,
     pub dependencies: Vec<Dependency>,
 }
+
+impl Package {
+    pub fn new(level: u32, origin: PackageOrigin, destination: PackageDestination, dependencies: Vec<Dependency>) -> Self {
+        Package { level, origin, destination, dependencies }
+    }
+}

@@ -27,6 +27,8 @@ use commands::{
     }
 };
 
+use crate::commands::replicate::{replicate_command, ReplicateArgs};
+
 mod commands;
 
 #[derive(Debug, Parser)]
@@ -54,6 +56,9 @@ enum Command {
 
     #[command(about = "Onboard a project and its dependencies")]
     Onboard(OnboardArgs),
+
+    #[command(about = "Replicate a project along with its dependencies")]
+    Replicate(ReplicateArgs)
 }
 
 fn main() -> Result<()> {
@@ -64,5 +69,6 @@ fn main() -> Result<()> {
         Command::Init(args) => init_command(&args),
         Command::ApplyManual(args) => apply_manual_command(&args),
         Command::Onboard(args) => onboard_command(&args),
+        Command::Replicate(args) => replicate_command(&args),
     }
 }

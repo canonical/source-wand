@@ -1,9 +1,10 @@
 use serde::{Serialize, Deserialize};
 
-use crate::model::package_origin_git::PackageOriginGit;
+use crate::model::{package_origin_git::PackageOriginGit, package_origin_go_cache::PackageOriginGoCache};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PackageOrigin {
     Git(PackageOriginGit),
+    GoCache(PackageOriginGoCache),
 }
