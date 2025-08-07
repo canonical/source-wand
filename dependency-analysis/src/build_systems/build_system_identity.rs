@@ -12,6 +12,7 @@ pub enum BuildSystemIdentity {
     PythonPip,
     JavaMaven,
     Go,
+    Unknown,
 }
 
 impl BuildSystemIdentity {
@@ -38,6 +39,7 @@ impl BuildSystemIdentity {
                     GoDependency::to_any(),
                 ]
             },
+            BuildSystemIdentity::Unknown => { vec![] },
         }
     }
 }

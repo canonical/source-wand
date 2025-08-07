@@ -1,5 +1,5 @@
 name: source-wand
-version: 0.0.1
+version: 0.14.0
 summary: CLI tool that helps with large scale manipulations of source code
 description: |
   `source-wand` is a CLI tool that helps with large scale manipulations of source code.
@@ -47,24 +47,34 @@ parts:
       export CARGO_HOME=$SNAPCRAFT_PART_INSTALL/rust/cargo
       export RUSTUP_HOME=$SNAPCRAFT_PART_INSTALL/rust/rustup
       curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
+  cdxgen:
+    plugin: npm
+    npm-node-version: "20.19.4"
+    npm-include-node: true
+    source: https://github.com/CycloneDX/cdxgen
+    source-type: git
   source-wand:
     plugin: rust
     build-packages:
       - libssl-dev
       - pkg-config
     stage-packages:
-      - git
-      - curl
       - ca-certificates
+      - curl
+      - git
+      - jq
     source: .
-    after: [rust-deps]
+    after:
+      - go-toolchain
+      - rust-deps
+      - cdxgen
     rust-path: ["cli"]
 
 apps:
   source-wand:
     command: bin/source-wand
     environment:
-      PATH: $SNAP/rust/cargo/bin:$SNAP/go-toolchain/bin:$PATH
+      PATH: $SNAP/node/bin:$SNAP/rust/cargo/bin:$SNAP/go-toolchain/bin:$PATH
 
       GIT_EXEC_PATH: $SNAP/usr/lib/git-core
 

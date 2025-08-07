@@ -71,6 +71,10 @@ impl ProjectManipulator for LxdProjectManipulator {
         self.to_any().try_run_shell(command, retries)
     }
 
+    fn get_working_directory(&self) -> PathBuf {
+        self.project_root.clone()
+    }
+
     fn cleanup(&self) {
         let _ = self.run_shell(
             format!(
