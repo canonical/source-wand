@@ -3,18 +3,41 @@ use std::{fs::create_dir_all, path::PathBuf};
 use anyhow::Result;
 use clap::Parser;
 use serde_json::Value;
-use source_wand_common::{project_manipulator::{local_project_manipulator::LocalProjectManipulator, project_manipulator::ProjectManipulator}, utils::{read_yaml_file::read_yaml_file, write_yaml_file::write_yaml_file}};
-use source_wand_replication::model::{package::Package, package_destination::PackageDestination, package_destination_git::PackageDestinationGit, package_origin::PackageOrigin, package_origin_go_cache::PackageOriginGoCache, replication_manifest::ReplicationManifest, replication_plan::ReplicationPlan};
+use source_wand_common::{
+    project_manipulator::{
+        local_project_manipulator::LocalProjectManipulator,
+        project_manipulator::ProjectManipulator
+    },
+    utils::{
+        read_yaml_file::read_yaml_file
+    }
+};
+use source_wand_replication::model::{
+    package::Package,
+    package_destination::PackageDestination,
+    package_destination_git::PackageDestinationGit,
+    package_origin::PackageOrigin,
+    package_origin_go_cache::PackageOriginGoCache,
+    replication_manifest::ReplicationManifest,
+    replication_plan::ReplicationPlan
+};
+use uuid::Uuid;
 
 #[derive(Debug, Parser)]
 pub struct ReplicationPlanArgs;
 
 pub fn replicate_plan_command(_args: &ReplicationPlanArgs) -> Result<()> {
+    plan_replication()?;
+    Ok(())
+}
+
+pub fn plan_replication() -> Result<ReplicationPlan> {
     let replication_manifest: ReplicationManifest = read_yaml_file("replication.yaml")?;
 
     match replication_manifest.origin {
         PackageOrigin::Git(origin) => {
-            let top_level_directory: PathBuf = PathBuf::from("./source-wand/top-level/repository");
+            let uuid: Uuid = Uuid::new_v4();
+            let top_level_directory: PathBuf = PathBuf::from(format!("./source-wand/{}", uuid));
             create_dir_all(&top_level_directory)?;
     
             let top_level: LocalProjectManipulator = LocalProjectManipulator::new(top_level_directory, true);
@@ -34,7 +57,7 @@ pub fn replicate_plan_command(_args: &ReplicationPlanArgs) -> Result<()> {
                         let version: String = build_dependency.get("Version").unwrap_or(&Value::String(origin.reference.split('/').last().unwrap_or_default().to_string())).as_str().unwrap_or_default().to_string();
                         let cache_path: String = build_dependency.get("Dir").unwrap_or(&Value::String(String::new())).as_str().unwrap_or_default().to_string();
 
-                        let (version_major, version_minor, version_patch, version_suffix, version_retrocompatible) = {
+                        let environment: Environment = {
                             let mut major: String = String::new();
                             let mut minor: String = String::new();
                             let mut patch: String = String::new();
@@ -72,30 +95,16 @@ pub fn replicate_plan_command(_args: &ReplicationPlanArgs) -> Result<()> {
                                     format!("{}.{}.{}-{}", major, minor, patch, suffix)
                                 };
 
-                            (major, minor, patch, suffix, retrocompatible)
+                            Environment::new(name, version, major, minor, patch, suffix, retrocompatible)
                         };
 
                         let PackageDestination::Git(package_destination) = &replication_manifest.destination_template;
-                        let package_destination_url: String = package_destination.git
-                            .replace("$NAME", &name)
-                            .replace("$VERSION_MAJOR", &version_major)
-                            .replace("$VERSION_MINOR", &version_minor)
-                            .replace("$VERSION_PATCH", &version_patch)
-                            .replace("$VERSION_SUFFIX", &version_suffix)
-                            .replace("$VERSION_RETROCOMPATIBLE", &version_retrocompatible)
-                            .replace("$VERSION", &version);
-                        let package_destination_reference: String = package_destination.reference
-                            .replace("$NAME", &name)
-                            .replace("$VERSION_MAJOR", &version_major)
-                            .replace("$VERSION_MINOR", &version_minor)
-                            .replace("$VERSION_PATCH", &version_patch)
-                            .replace("$VERSION_SUFFIX", &version_suffix)
-                            .replace("$VERSION_RETROCOMPATIBLE", &version_retrocompatible)
-                            .replace("$VERSION", &version);
+                        let package_destination_url: String = environment.apply(&package_destination.git);
+                        let package_destination_reference: String = environment.apply(&package_destination.reference);
 
                         let package: Package = Package::new(
                             0,
-                            PackageOriginGoCache::new(name, version, cache_path),
+                            PackageOriginGoCache::new(environment.name, environment.version, cache_path),
                             PackageDestinationGit::new(
                                 package_destination_url,
                                 package_destination_reference,
@@ -107,14 +116,54 @@ pub fn replicate_plan_command(_args: &ReplicationPlanArgs) -> Result<()> {
                     }
                 }
             }
+            top_level.cleanup();
 
             let replication_plan: ReplicationPlan = ReplicationPlan::new(replication_manifest.project, replication_manifest.hooks, packages);
-            write_yaml_file(&replication_plan, "./source-wand/replication-plan.yaml")?;
-
-            top_level.cleanup();
+            Ok(replication_plan)
         },
-        PackageOrigin::GoCache(_origin) => {},
+        PackageOrigin::GoCache(_origin) => { todo!() },
+    }
+}
+
+struct Environment {
+    name: String,
+    version: String,
+    version_major: String,
+    version_minor: String,
+    version_patch: String,
+    version_suffix: String,
+    version_retrocompatible: String,
+}
+
+impl Environment {
+    pub fn new(
+        name: String,
+        version: String,
+        version_major: String,
+        version_minor: String,
+        version_patch: String,
+        version_suffix: String,
+        version_retrocompatible: String,
+    ) -> Self {
+        Environment {
+            name,
+            version,
+            version_major,
+            version_minor,
+            version_patch,
+            version_suffix,
+            version_retrocompatible
+        }
     }
 
-    Ok(())
+    pub fn apply(&self, template: &String) -> String {
+        template
+            .replace("$NAME", &self.name)
+            .replace("$VERSION_MAJOR", &self.version_major)
+            .replace("$VERSION_MINOR", &self.version_minor)
+            .replace("$VERSION_PATCH", &self.version_patch)
+            .replace("$VERSION_SUFFIX", &self.version_suffix)
+            .replace("$VERSION_RETROCOMPATIBLE", &self.version_retrocompatible)
+            .replace("$VERSION", &self.version)
+    }
 }
