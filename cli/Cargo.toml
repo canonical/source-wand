@@ -17,3 +17,4 @@ source-wand-onboarding = { path = "../onboarding" }
 source-wand-dependency-tree = { path = "../dependency-tree" }
 source-wand-dependency-analysis = { path = "../dependency-analysis" }
 source-wand-common = { path = "../common" }
+uuid = { version = "1.17.0", features = ["v4"] }
