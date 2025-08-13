@@ -1,7 +1,7 @@
 pub mod replication_manifest;
 pub mod replication_plan;
 
-pub mod hooks;
+pub mod replication_project;
 
 pub mod package;
 

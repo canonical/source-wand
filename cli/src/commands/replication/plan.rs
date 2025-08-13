@@ -34,7 +34,7 @@ pub fn replicate_plan_command(_args: &ReplicationPlanArgs) -> Result<()> {
 pub fn plan_replication() -> Result<ReplicationPlan> {
     let replication_manifest: ReplicationManifest = read_yaml_file("replication.yaml")?;
 
-    match replication_manifest.origin {
+    match &replication_manifest.project.origin {
         PackageOrigin::Git(origin) => {
             let uuid: Uuid = Uuid::new_v4();
             let top_level_directory: PathBuf = PathBuf::from(format!("./source-wand/{}", uuid));
@@ -98,7 +98,7 @@ pub fn plan_replication() -> Result<ReplicationPlan> {
                             Environment::new(name, version, major, minor, patch, suffix, retrocompatible)
                         };
 
-                        let PackageDestination::Git(package_destination) = &replication_manifest.destination_template;
+                        let PackageDestination::Git(package_destination) = &replication_manifest.project.destination_template;
                         let package_destination_url: String = environment.apply(&package_destination.git);
                         let package_destination_reference: String = environment.apply(&package_destination.reference);
 
@@ -118,7 +118,7 @@ pub fn plan_replication() -> Result<ReplicationPlan> {
             }
             top_level.cleanup();
 
-            let replication_plan: ReplicationPlan = ReplicationPlan::new(replication_manifest.project, replication_manifest.hooks, packages);
+            let replication_plan: ReplicationPlan = ReplicationPlan::new(replication_manifest.project, packages);
             Ok(replication_plan)
         },
         PackageOrigin::GoCache(_origin) => { todo!() },

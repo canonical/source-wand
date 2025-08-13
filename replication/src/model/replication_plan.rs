@@ -1,16 +1,15 @@
 use serde::{Serialize, Deserialize};
 
-use crate::model::{hooks::Hooks, package::Package};
+use crate::model::{package::Package, replication_project::ReplicationProject};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReplicationPlan {
-    pub project: String,
-    pub hooks: Option<Hooks>,
+    pub project: ReplicationProject,
     pub packages: Vec<Package>,
 }
 
 impl ReplicationPlan {
-    pub fn new(project: String, hooks: Option<Hooks>, packages: Vec<Package>) -> Self {
-        ReplicationPlan { project, hooks, packages }
+    pub fn new(project: ReplicationProject, packages: Vec<Package>) -> Self {
+        ReplicationPlan { project, packages }
     }
 }
