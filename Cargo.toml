@@ -1,6 +1,8 @@
 [workspace]
 resolver = "3"
 members = [
+    "add-on-api",
+    "add-ons/sourcecraft",
     "cli",
     "common",
     "dependency-analysis",
