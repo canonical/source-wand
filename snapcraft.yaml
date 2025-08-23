@@ -1,5 +1,5 @@
 name: source-wand
-version: 0.14.0
+version: 0.15.0
 summary: CLI tool that helps with large scale manipulations of source code
 description: |
   `source-wand` is a CLI tool that helps with large scale manipulations of source code.
@@ -63,6 +63,7 @@ parts:
       - curl
       - git
       - jq
+      - openssh-client
     source: .
     after:
       - go-toolchain
@@ -77,6 +78,7 @@ apps:
       PATH: $SNAP/node/bin:$SNAP/rust/cargo/bin:$SNAP/go-toolchain/bin:$PATH
 
       GIT_EXEC_PATH: $SNAP/usr/lib/git-core
+      GIT_SSH_COMMAND: "ssh -o StrictHostKeyChecking=no"
 
       CARGO_HOME: $SNAP_USER_DATA/.cargo
       RUSTUP_HOME: $SNAP_USER_DATA/.rustup
@@ -86,3 +88,4 @@ apps:
     plugs:
       - home
       - network
+      - ssh-keys
