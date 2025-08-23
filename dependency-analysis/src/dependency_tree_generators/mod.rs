@@ -3,7 +3,7 @@ use source_wand_common::project_manipulator::project_manipulator::AnyProjectMani
 
 use crate::{
     build_systems::build_system_identity::BuildSystemIdentity,
-    dependency_tree_generators::cdxgen_dependency_tree_generator::generate_cdxgen_dependency_tree,
+    dependency_tree_generators::{cdxgen_dependency_tree_generator::generate_cdxgen_dependency_tree, go_dependency_tree_generator::generate_go_dependency_tree},
     dependency_tree_node::DependencyTreeNode
 };
 
@@ -33,7 +33,7 @@ pub fn generate_dependency_tree(
             generate_cdxgen_dependency_tree(project_manipulator, Some("java"))
         },
         BuildSystemIdentity::Go => {
-            generate_cdxgen_dependency_tree(project_manipulator, Some("go"))
+            generate_go_dependency_tree(project_manipulator)
         },
         BuildSystemIdentity::Unknown => {
             generate_cdxgen_dependency_tree(project_manipulator, None)
