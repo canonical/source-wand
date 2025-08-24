@@ -6,6 +6,7 @@ use serde::Serialize;
 use source_wand_dependency_analysis::{
     dependency_tree_node::DependencyTreeNode,
     dependency_tree_request::DependencyTreeRequest,
+    find_build_requirements,
     find_dependency_tree,
     unique_dependencies_list::UniqueDependenciesList
 };
@@ -20,6 +21,9 @@ pub struct DependenciesArgs {
 
     #[arg(long, action = ArgAction::SetFalse)]
     flatten: bool,
+
+    #[arg(long, action = ArgAction::SetTrue)]
+    minimal_build_requirements: bool,
 }
 
 #[derive(Debug, Subcommand)]
@@ -108,7 +112,37 @@ pub fn dependencies_command(args: &DependenciesArgs) -> Result<()> {
         },
     };
 
-    let output_data = if args.flatten {
+    let output_data: OutputData = if args.minimal_build_requirements {
+        OutputData::List(match &args.command {
+            DependenciesCommand::Local(args) => {
+                find_build_requirements(
+                    DependencyTreeRequest::LocalProject {
+                        path: args.path.clone()
+                    },
+                    &dependency_tree
+                ).map_err(|e| Error::msg(e))?
+            },
+            DependenciesCommand::Git(args) => {
+                find_build_requirements(
+                    DependencyTreeRequest::GitProject {
+                        url: args.url.clone(),
+                        branch: args.branch.clone(),
+                    },
+                    &dependency_tree
+                ).map_err(|e| Error::msg(e))?
+            },
+            DependenciesCommand::ByName(args) => {
+                find_build_requirements(
+                    DependencyTreeRequest::NameBased {
+                        name: args.name.clone(),
+                        version: args.version.clone(),
+                    },
+                    &dependency_tree
+                ).map_err(|e| Error::msg(e))?
+            },
+        })
+    }
+    else if args.flatten {
         OutputData::Tree(dependency_tree)
     }
     else {
