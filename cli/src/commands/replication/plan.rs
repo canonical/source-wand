@@ -49,13 +49,38 @@ pub fn plan_replication() -> Result<ReplicationPlan> {
 
             let mut packages: Vec<Package> = Vec::new();
 
-            let build_dependencies: serde_json::Value = serde_json::from_str(top_level.run_shell("go list -json -m all | jq -s".to_string())?.as_str())?;
+            let build_dependencies: serde_json::Value = serde_json::from_str(
+                top_level.run_shell(
+                    "go list -json -m all | jq -s".to_string()
+                )?.as_str()
+            )?;
+
             if let Value::Array(build_dependencies) = build_dependencies {
                 for build_dependency in build_dependencies {
                     if let Value::Object(build_dependency) = build_dependency {
-                        let name: String = build_dependency.get("Path").unwrap().as_str().unwrap_or_default().replace("/", "-");
-                        let version: String = build_dependency.get("Version").unwrap_or(&Value::String(origin.reference.split('/').last().unwrap_or_default().to_string())).as_str().unwrap_or_default().to_string();
-                        let cache_path: String = build_dependency.get("Dir").unwrap_or(&Value::String(String::new())).as_str().unwrap_or_default().to_string();
+                        let name: String = build_dependency.get("Path")
+                            .unwrap()
+                            .as_str()
+                            .unwrap_or_default()
+                            .replace("/", "-");
+
+                        let version: String = build_dependency.get("Version")
+                            .unwrap_or(
+                                &Value::String(origin.reference.split('/')
+                                    .last()
+                                    .unwrap_or_default()
+                                    .to_string()
+                                )
+                            )
+                            .as_str()
+                            .unwrap_or_default()
+                            .to_string();
+
+                        let cache_path: String = build_dependency.get("Dir")
+                            .unwrap_or(&Value::String(String::new()))
+                            .as_str()
+                            .unwrap_or_default()
+                            .to_string();
 
                         let environment: Environment = {
                             let mut major: String = String::new();
@@ -104,7 +129,11 @@ pub fn plan_replication() -> Result<ReplicationPlan> {
 
                         let package: Package = Package::new(
                             0,
-                            PackageOriginGoCache::new(environment.name, environment.version, cache_path),
+                            PackageOriginGoCache::new(
+                                environment.name,
+                                environment.version,
+                                cache_path
+                            ),
                             PackageDestinationGit::new(
                                 package_destination_url,
                                 package_destination_reference,
