@@ -12,7 +12,13 @@ use source_wand_common::{
         read_yaml_file::read_yaml_file
     }
 };
+use source_wand_dependency_analysis::{
+    dependency_tree_node::DependencyTreeNode,
+    dependency_tree_request::DependencyTreeRequest,
+    find_dependency_tree
+};
 use source_wand_replication::model::{
+    dependency::Dependency,
     package::Package,
     package_destination::PackageDestination,
     package_destination_git::PackageDestinationGit,
@@ -48,6 +54,13 @@ pub fn plan_replication() -> Result<ReplicationPlan> {
             top_level.run_shell("go mod download all".to_string())?;
 
             let mut packages: Vec<Package> = Vec::new();
+
+            let dependency_tree: DependencyTreeNode = find_dependency_tree(
+                DependencyTreeRequest::from_git_project(
+                    origin.git,
+                    Some(origin.reference.clone())
+                )
+            )?;
 
             let build_dependencies: serde_json::Value = serde_json::from_str(
                 top_level.run_shell(
@@ -120,12 +133,17 @@ pub fn plan_replication() -> Result<ReplicationPlan> {
                                     format!("{}.{}.{}-{}", major, minor, patch, suffix)
                                 };
 
-                            Environment::new(name, version, major, minor, patch, suffix, retrocompatible)
+                            Environment::new(name.clone(), version, major, minor, patch, suffix, retrocompatible)
                         };
 
                         let PackageDestination::Git(package_destination) = &replication_manifest.destination_template;
                         let package_destination_url: String = environment.apply(&package_destination.git);
                         let package_destination_reference: String = environment.apply(&package_destination.reference);
+
+                        let dependencies: Vec<Dependency> = find_dependencies_for_package(
+                            &dependency_tree,
+                            &name,
+                        );
 
                         let package: Package = Package::new(
                             0,
@@ -138,7 +156,7 @@ pub fn plan_replication() -> Result<ReplicationPlan> {
                                 package_destination_url,
                                 package_destination_reference,
                             ),
-                            Vec::new(),
+                            dependencies,
                         );
 
                         packages.push(package);
@@ -148,6 +166,7 @@ pub fn plan_replication() -> Result<ReplicationPlan> {
             top_level.cleanup();
 
             let replication_plan: ReplicationPlan = ReplicationPlan::new(replication_manifest.project, replication_manifest.hooks, packages);
+
             Ok(replication_plan)
         },
         PackageOrigin::GoCache(_origin) => { todo!() },
@@ -195,4 +214,25 @@ impl Environment {
             .replace("$VERSION_RETROCOMPATIBLE", &self.version_retrocompatible)
             .replace("$VERSION", &self.version)
     }
+}
+
+fn find_dependencies_for_package(root: &DependencyTreeNode, package_name: &str) -> Vec<Dependency> {
+    if root.project.name.replace("/", "-") == package_name {
+        return root.dependencies
+            .iter()
+            .map(|dep| Dependency {
+                name: dep.project.name.replace("/", "-"),
+                version: dep.project.version.clone(),
+            })
+            .collect();
+    }
+
+    for child in &root.dependencies {
+        let found = find_dependencies_for_package(child, package_name);
+        if !found.is_empty() {
+            return found;
+        }
+    }
+
+    Vec::new()
 }
