@@ -146,7 +146,6 @@ pub fn plan_replication() -> Result<ReplicationPlan> {
                         );
 
                         let package: Package = Package::new(
-                            0,
                             PackageOriginGoCache::new(
                                 environment.name,
                                 environment.version,
