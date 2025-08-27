@@ -1,0 +1,1013 @@
+###############NEW-CALL####################
+Path: /home/andrew/source-wand-projects/a2e55276-c6eb-4b7f-b992-b93e9739de17
+Module Name: github.com/canonical/chisel
+URL: https://github.com/canonical/chisel
+Version: v1.2.0
+-------------------------------------------
+Successfully created directory!
+Clone: 
+Checkout: 
+Go.Mod String: {
+	"Module": {
+		"Path": "github.com/canonical/chisel"
+	},
+	"Go": "1.23.8",
+	"Require": [
+		{
+			"Path": "github.com/blakesmith/ar",
+			"Version": "v0.0.0-20190502131153-809d4375e1fb"
+		},
+		{
+			"Path": "github.com/jessevdk/go-flags",
+			"Version": "v1.6.1"
+		},
+		{
+			"Path": "github.com/juju/fslock",
+			"Version": "v0.0.0-20160525022230-4d5c94c67b4b"
+		},
+		{
+			"Path": "github.com/klauspost/compress",
+			"Version": "v1.18.0"
+		},
+		{
+			"Path": "github.com/ulikunitz/xz",
+			"Version": "v0.5.12"
+		},
+		{
+			"Path": "go.starlark.net",
+			"Version": "v0.0.0-20250417143717-f57e51f710eb"
+		},
+		{
+			"Path": "golang.org/x/crypto",
+			"Version": "v0.37.0"
+		},
+		{
+			"Path": "golang.org/x/term",
+			"Version": "v0.31.0"
+		},
+		{
+			"Path": "gopkg.in/check.v1",
+			"Version": "v1.0.0-20201130134442-10cb98267c6c"
+		},
+		{
+			"Path": "gopkg.in/yaml.v3",
+			"Version": "v3.0.1"
+		},
+		{
+			"Path": "github.com/google/go-cmp",
+			"Version": "v0.6.0",
+			"Indirect": true
+		},
+		{
+			"Path": "github.com/kr/pretty",
+			"Version": "v0.3.1",
+			"Indirect": true
+		},
+		{
+			"Path": "github.com/kr/text",
+			"Version": "v0.2.0",
+			"Indirect": true
+		},
+		{
+			"Path": "github.com/rogpeppe/go-internal",
+			"Version": "v1.14.1",
+			"Indirect": true
+		},
+		{
+			"Path": "golang.org/x/sys",
+			"Version": "v0.32.0",
+			"Indirect": true
+		}
+	],
+	"Exclude": null,
+	"Replace": null,
+	"Retract": null,
+	"Tool": null
+}
+
+@@@@@ Added New Node: github.com/canonical/chisel
+^^Go Mod Parsed Exists (Doesn't Fail)
+## Parent: github.com/canonical/chisel | Child: github.com/blakesmith/ar
+Key Doesn't Exist. Need to create github.com/blakesmith/ar
+###############NEW-CALL####################
+Path: /home/andrew/source-wand-projects/c82107f3-9ab1-499a-a725-bd8393684dba
+Module Name: github.com/blakesmith/ar
+URL: https://github.com/blakesmith/ar
+Version: v0.0.0-20190502131153-809d4375e1fb
+-------------------------------------------
+Successfully created directory!
+Clone: 
+Checkout: 
+dependency github.com/canonical/chisel has dep github.com/blakesmith/ar
+## Parent: github.com/canonical/chisel | Child: github.com/jessevdk/go-flags
+Key Doesn't Exist. Need to create github.com/jessevdk/go-flags
+###############NEW-CALL####################
+Path: /home/andrew/source-wand-projects/d222fdb8-e771-4ad0-873b-0f4cde16dc79
+Module Name: github.com/jessevdk/go-flags
+URL: https://github.com/jessevdk/go-flags
+Version: v1.6.1
+-------------------------------------------
+Successfully created directory!
+Clone: 
+Checkout: 
+Go.Mod String: {
+	"Module": {
+		"Path": "github.com/jessevdk/go-flags"
+	},
+	"Go": "1.20",
+	"Require": [
+		{
+			"Path": "golang.org/x/sys",
+			"Version": "v0.21.0"
+		}
+	],
+	"Exclude": null,
+	"Replace": null,
+	"Retract": null,
+	"Tool": null
+}
+
+@@@@@ Added New Node: github.com/jessevdk/go-flags
+^^Go Mod Parsed Exists (Doesn't Fail)
+## Parent: github.com/jessevdk/go-flags | Child: golang.org/x/sys
+Key Doesn't Exist. Need to create golang.org/x/sys
+###############NEW-CALL####################
+Path: /home/andrew/source-wand-projects/690672c6-699f-44fe-8090-fe2828024d07
+Module Name: golang.org/x/sys
+URL: https://go.googlesource.com/sys
+Version: v0.21.0
+-------------------------------------------
+Successfully created directory!
+Clone: 
+Checkout: 
+Go.Mod String: {
+	"Module": {
+		"Path": "golang.org/x/sys"
+	},
+	"Go": "1.18",
+	"Require": null,
+	"Exclude": null,
+	"Replace": null,
+	"Retract": null,
+	"Tool": null
+}
+
+@@@@@ Added New Node: golang.org/x/sys
+^^Go Mod Parsed Exists (Doesn't Fail)
+dependency github.com/jessevdk/go-flags has dep golang.org/x/sys
+dependency github.com/canonical/chisel has dep github.com/jessevdk/go-flags
+## Parent: github.com/canonical/chisel | Child: github.com/juju/fslock
+Key Doesn't Exist. Need to create github.com/juju/fslock
+###############NEW-CALL####################
+Path: /home/andrew/source-wand-projects/6133abcf-985b-4960-8da9-4f00ac870436
+Module Name: github.com/juju/fslock
+URL: https://github.com/juju/fslock
+Version: v0.0.0-20160525022230-4d5c94c67b4b
+-------------------------------------------
+Successfully created directory!
+Clone: 
+Checkout: 
+dependency github.com/canonical/chisel has dep github.com/juju/fslock
+## Parent: github.com/canonical/chisel | Child: github.com/klauspost/compress
+Key Doesn't Exist. Need to create github.com/klauspost/compress
+###############NEW-CALL####################
+Path: /home/andrew/source-wand-projects/04e13f3e-abd6-42cf-8deb-2017e0b0e507
+Module Name: github.com/klauspost/compress
+URL: https://github.com/klauspost/compress
+Version: v1.18.0
+-------------------------------------------
+Successfully created directory!
+Clone: 
+Checkout: 
+Go.Mod String: {
+	"Module": {
+		"Path": "github.com/klauspost/compress"
+	},
+	"Go": "1.22",
+	"Require": null,
+	"Exclude": null,
+	"Replace": null,
+	"Retract": [
+		{
+			"Low": "v1.14.3",
+			"High": "v1.14.3",
+			"Rationale": "https://github.com/klauspost/compress/pull/503"
+		},
+		{
+			"Low": "v1.14.2",
+			"High": "v1.14.2"
+		},
+		{
+			"Low": "v1.14.1",
+			"High": "v1.14.1"
+		}
+	],
+	"Tool": null
+}
+
+@@@@@ Added New Node: github.com/klauspost/compress
+dependency github.com/canonical/chisel has dep github.com/klauspost/compress
+## Parent: github.com/canonical/chisel | Child: github.com/ulikunitz/xz
+Key Doesn't Exist. Need to create github.com/ulikunitz/xz
+###############NEW-CALL####################
+Path: /home/andrew/source-wand-projects/01718696-d893-4915-91b2-7671bca8ff5b
+Module Name: github.com/ulikunitz/xz
+URL: https://github.com/ulikunitz/xz
+Version: v0.5.12
+-------------------------------------------
+Successfully created directory!
+Clone: 
+Checkout: 
+Go.Mod String: {
+	"Module": {
+		"Path": "github.com/ulikunitz/xz"
+	},
+	"Go": "1.12",
+	"Require": null,
+	"Exclude": null,
+	"Replace": null,
+	"Retract": null,
+	"Tool": null
+}
+
+@@@@@ Added New Node: github.com/ulikunitz/xz
+^^Go Mod Parsed Exists (Doesn't Fail)
+dependency github.com/canonical/chisel has dep github.com/ulikunitz/xz
+## Parent: github.com/canonical/chisel | Child: go.starlark.net
+Key Doesn't Exist. Need to create go.starlark.net
+###############NEW-CALL####################
+Path: /home/andrew/source-wand-projects/0e002b0a-73b2-487a-a10d-026e06287a76
+Module Name: go.starlark.net
+URL: https://github.com/google/starlark-go
+Version: v0.0.0-20250417143717-f57e51f710eb
+-------------------------------------------
+Successfully created directory!
+Clone: 
+Checkout: 
+Go.Mod String: {
+	"Module": {
+		"Path": "go.starlark.net"
+	},
+	"Go": "1.19",
+	"Require": [
+		{
+			"Path": "github.com/chzyer/readline",
+			"Version": "v0.0.0-20180603132655-2972be24d48e"
+		},
+		{
+			"Path": "github.com/google/go-cmp",
+			"Version": "v0.5.5"
+		},
+		{
+			"Path": "golang.org/x/sys",
+			"Version": "v0.0.0-20220715151400-c0bba94af5f8"
+		},
+		{
+			"Path": "golang.org/x/term",
+			"Version": "v0.0.0-20220526004731-065cf7ba2467"
+		},
+		{
+			"Path": "google.golang.org/protobuf",
+			"Version": "v1.33.0"
+		},
+		{
+			"Path": "github.com/chzyer/logex",
+			"Version": "v1.1.10",
+			"Indirect": true
+		},
+		{
+			"Path": "github.com/chzyer/test",
+			"Version": "v0.0.0-20180213035817-a1ea475d72b1",
+			"Indirect": true
+		},
+		{
+			"Path": "golang.org/x/xerrors",
+			"Version": "v0.0.0-20200804184101-5ec99f83aff1",
+			"Indirect": true
+		}
+	],
+	"Exclude": null,
+	"Replace": null,
+	"Retract": null,
+	"Tool": null
+}
+
+@@@@@ Added New Node: go.starlark.net
+^^Go Mod Parsed Exists (Doesn't Fail)
+## Parent: go.starlark.net | Child: github.com/chzyer/readline
+Key Doesn't Exist. Need to create github.com/chzyer/readline
+###############NEW-CALL####################
+Path: /home/andrew/source-wand-projects/a72ab5a1-259f-4cef-9b1c-94629ccd7a95
+Module Name: github.com/chzyer/readline
+URL: https://github.com/chzyer/readline
+Version: v0.0.0-20180603132655-2972be24d48e
+-------------------------------------------
+Successfully created directory!
+Clone: 
+Checkout: 
+dependency go.starlark.net has dep github.com/chzyer/readline
+## Parent: go.starlark.net | Child: github.com/google/go-cmp
+Key Doesn't Exist. Need to create github.com/google/go-cmp
+###############NEW-CALL####################
+Path: /home/andrew/source-wand-projects/c79e9106-9a19-4a7f-87d5-cee0661148aa
+Module Name: github.com/google/go-cmp
+URL: https://github.com/google/go-cmp
+Version: v0.5.5
+-------------------------------------------
+Successfully created directory!
+Clone: 
+Checkout: 
+Go.Mod String: {
+	"Module": {
+		"Path": "github.com/google/go-cmp"
+	},
+	"Go": "1.8",
+	"Require": [
+		{
+			"Path": "golang.org/x/xerrors",
+			"Version": "v0.0.0-20191204190536-9bdfabe68543"
+		}
+	],
+	"Exclude": null,
+	"Replace": null,
+	"Retract": null,
+	"Tool": null
+}
+
+@@@@@ Added New Node: github.com/google/go-cmp
+^^Go Mod Parsed Exists (Doesn't Fail)
+## Parent: github.com/google/go-cmp | Child: golang.org/x/xerrors
+Key Doesn't Exist. Need to create golang.org/x/xerrors
+###############NEW-CALL####################
+Path: /home/andrew/source-wand-projects/6dd60987-e87f-4a7c-b5e5-8fa6676c04f7
+Module Name: golang.org/x/xerrors
+URL: https://go.googlesource.com/xerrors
+Version: v0.0.0-20191204190536-9bdfabe68543
+-------------------------------------------
+Successfully created directory!
+Clone: 
+Checkout: 
+Go.Mod String: {
+	"Module": {
+		"Path": "golang.org/x/xerrors"
+	},
+	"Go": "1.11",
+	"Require": null,
+	"Exclude": null,
+	"Replace": null,
+	"Retract": null,
+	"Tool": null
+}
+
+@@@@@ Added New Node: golang.org/x/xerrors
+^^Go Mod Parsed Exists (Doesn't Fail)
+dependency github.com/google/go-cmp has dep golang.org/x/xerrors
+dependency go.starlark.net has dep github.com/google/go-cmp
+## Parent: go.starlark.net | Child: golang.org/x/sys
+Found the key
+dependency go.starlark.net has dep golang.org/x/sys
+## Parent: go.starlark.net | Child: golang.org/x/term
+Key Doesn't Exist. Need to create golang.org/x/term
+###############NEW-CALL####################
+Path: /home/andrew/source-wand-projects/65b496bb-289c-4338-af45-e4478b94c90c
+Module Name: golang.org/x/term
+URL: https://go.googlesource.com/term
+Version: v0.0.0-20220526004731-065cf7ba2467
+-------------------------------------------
+Successfully created directory!
+Clone: 
+Checkout: 
+Go.Mod String: {
+	"Module": {
+		"Path": "golang.org/x/term"
+	},
+	"Go": "1.17",
+	"Require": [
+		{
+			"Path": "golang.org/x/sys",
+			"Version": "v0.0.0-20210615035016-665e8c7367d1"
+		}
+	],
+	"Exclude": null,
+	"Replace": null,
+	"Retract": null,
+	"Tool": null
+}
+
+@@@@@ Added New Node: golang.org/x/term
+^^Go Mod Parsed Exists (Doesn't Fail)
+## Parent: golang.org/x/term | Child: golang.org/x/sys
+Found the key
+dependency golang.org/x/term has dep golang.org/x/sys
+dependency go.starlark.net has dep golang.org/x/term
+## Parent: go.starlark.net | Child: google.golang.org/protobuf
+Key Doesn't Exist. Need to create google.golang.org/protobuf
+###############NEW-CALL####################
+Path: /home/andrew/source-wand-projects/2702760e-1b2a-4352-9de5-38a757a659d0
+Module Name: google.golang.org/protobuf
+URL: https://go.googlesource.com/protobuf
+Version: v1.33.0
+-------------------------------------------
+Successfully created directory!
+Clone: 
+Checkout: 
+Go.Mod String: {
+	"Module": {
+		"Path": "google.golang.org/protobuf"
+	},
+	"Go": "1.17",
+	"Require": [
+		{
+			"Path": "github.com/golang/protobuf",
+			"Version": "v1.5.0"
+		},
+		{
+			"Path": "github.com/google/go-cmp",
+			"Version": "v0.5.5"
+		},
+		{
+			"Path": "golang.org/x/xerrors",
+			"Version": "v0.0.0-20191204190536-9bdfabe68543",
+			"Indirect": true
+		}
+	],
+	"Exclude": null,
+	"Replace": null,
+	"Retract": null,
+	"Tool": null
+}
+
+@@@@@ Added New Node: google.golang.org/protobuf
+^^Go Mod Parsed Exists (Doesn't Fail)
+## Parent: google.golang.org/protobuf | Child: github.com/golang/protobuf
+Key Doesn't Exist. Need to create github.com/golang/protobuf
+###############NEW-CALL####################
+Path: /home/andrew/source-wand-projects/590a2a58-fe2a-4c03-8f76-6cd3cd5af06c
+Module Name: github.com/golang/protobuf
+URL: https://github.com/golang/protobuf
+Version: v1.5.0
+-------------------------------------------
+Successfully created directory!
+Clone: 
+Checkout: 
+Go.Mod String: {
+	"Module": {
+		"Path": "github.com/golang/protobuf"
+	},
+	"Go": "1.9",
+	"Require": [
+		{
+			"Path": "github.com/google/go-cmp",
+			"Version": "v0.5.5"
+		},
+		{
+			"Path": "google.golang.org/protobuf",
+			"Version": "v1.26.0-rc.1"
+		}
+	],
+	"Exclude": null,
+	"Replace": null,
+	"Retract": null,
+	"Tool": null
+}
+
+@@@@@ Added New Node: github.com/golang/protobuf
+^^Go Mod Parsed Exists (Doesn't Fail)
+## Parent: github.com/golang/protobuf | Child: github.com/google/go-cmp
+Found the key
+dependency github.com/golang/protobuf has dep github.com/google/go-cmp
+## Parent: github.com/golang/protobuf | Child: google.golang.org/protobuf
+Found the key
+dependency github.com/golang/protobuf has dep google.golang.org/protobuf
+dependency google.golang.org/protobuf has dep github.com/golang/protobuf
+## Parent: google.golang.org/protobuf | Child: github.com/google/go-cmp
+Found the key
+dependency google.golang.org/protobuf has dep github.com/google/go-cmp
+## Parent: google.golang.org/protobuf | Child: golang.org/x/xerrors
+Found the key
+dependency google.golang.org/protobuf has dep golang.org/x/xerrors
+dependency go.starlark.net has dep google.golang.org/protobuf
+## Parent: go.starlark.net | Child: github.com/chzyer/logex
+Key Doesn't Exist. Need to create github.com/chzyer/logex
+###############NEW-CALL####################
+Path: /home/andrew/source-wand-projects/bad21870-1863-4a39-b44f-187a13907dff
+Module Name: github.com/chzyer/logex
+URL: https://github.com/chzyer/logex
+Version: v1.1.10
+-------------------------------------------
+Successfully created directory!
+Clone: 
+Checkout: 
+dependency go.starlark.net has dep github.com/chzyer/logex
+## Parent: go.starlark.net | Child: github.com/chzyer/test
+Key Doesn't Exist. Need to create github.com/chzyer/test
+###############NEW-CALL####################
+Path: /home/andrew/source-wand-projects/9dca884a-577e-4490-842c-b50b76ade4a3
+Module Name: github.com/chzyer/test
+URL: https://github.com/chzyer/test
+Version: v0.0.0-20180213035817-a1ea475d72b1
+-------------------------------------------
+Successfully created directory!
+Clone: 
+Checkout: 
+dependency go.starlark.net has dep github.com/chzyer/test
+## Parent: go.starlark.net | Child: golang.org/x/xerrors
+Found the key
+dependency go.starlark.net has dep golang.org/x/xerrors
+dependency github.com/canonical/chisel has dep go.starlark.net
+## Parent: github.com/canonical/chisel | Child: golang.org/x/crypto
+Key Doesn't Exist. Need to create golang.org/x/crypto
+###############NEW-CALL####################
+Path: /home/andrew/source-wand-projects/1936bc21-0495-4884-9565-66297b4dc641
+Module Name: golang.org/x/crypto
+URL: https://go.googlesource.com/crypto
+Version: v0.37.0
+-------------------------------------------
+Successfully created directory!
+Clone: 
+Checkout: 
+Go.Mod String: {
+	"Module": {
+		"Path": "golang.org/x/crypto"
+	},
+	"Go": "1.23.0",
+	"Require": [
+		{
+			"Path": "golang.org/x/net",
+			"Version": "v0.21.0"
+		},
+		{
+			"Path": "golang.org/x/sys",
+			"Version": "v0.32.0"
+		},
+		{
+			"Path": "golang.org/x/term",
+			"Version": "v0.31.0"
+		},
+		{
+			"Path": "golang.org/x/text",
+			"Version": "v0.24.0",
+			"Indirect": true
+		}
+	],
+	"Exclude": null,
+	"Replace": null,
+	"Retract": null,
+	"Tool": null
+}
+
+@@@@@ Added New Node: golang.org/x/crypto
+^^Go Mod Parsed Exists (Doesn't Fail)
+## Parent: golang.org/x/crypto | Child: golang.org/x/net
+Key Doesn't Exist. Need to create golang.org/x/net
+###############NEW-CALL####################
+Path: /home/andrew/source-wand-projects/92b6fd5c-c267-4cc2-b7bc-d27727b35518
+Module Name: golang.org/x/net
+URL: https://go.googlesource.com/net
+Version: v0.21.0
+-------------------------------------------
+Successfully created directory!
+Clone: 
+Checkout: 
+Go.Mod String: {
+	"Module": {
+		"Path": "golang.org/x/net"
+	},
+	"Go": "1.18",
+	"Require": [
+		{
+			"Path": "golang.org/x/crypto",
+			"Version": "v0.19.0"
+		},
+		{
+			"Path": "golang.org/x/sys",
+			"Version": "v0.17.0"
+		},
+		{
+			"Path": "golang.org/x/term",
+			"Version": "v0.17.0"
+		},
+		{
+			"Path": "golang.org/x/text",
+			"Version": "v0.14.0"
+		}
+	],
+	"Exclude": null,
+	"Replace": null,
+	"Retract": null,
+	"Tool": null
+}
+
+@@@@@ Added New Node: golang.org/x/net
+^^Go Mod Parsed Exists (Doesn't Fail)
+## Parent: golang.org/x/net | Child: golang.org/x/crypto
+Found the key
+dependency golang.org/x/net has dep golang.org/x/crypto
+## Parent: golang.org/x/net | Child: golang.org/x/sys
+Found the key
+dependency golang.org/x/net has dep golang.org/x/sys
+## Parent: golang.org/x/net | Child: golang.org/x/term
+Found the key
+dependency golang.org/x/net has dep golang.org/x/term
+## Parent: golang.org/x/net | Child: golang.org/x/text
+Key Doesn't Exist. Need to create golang.org/x/text
+###############NEW-CALL####################
+Path: /home/andrew/source-wand-projects/4a37664b-50cf-4cfd-92b8-8a1c26858e66
+Module Name: golang.org/x/text
+URL: https://go.googlesource.com/text
+Version: v0.14.0
+-------------------------------------------
+Successfully created directory!
+Clone: 
+Checkout: 
+Go.Mod String: {
+	"Module": {
+		"Path": "golang.org/x/text"
+	},
+	"Go": "1.18",
+	"Require": [
+		{
+			"Path": "golang.org/x/tools",
+			"Version": "v0.6.0"
+		},
+		{
+			"Path": "golang.org/x/mod",
+			"Version": "v0.8.0",
+			"Indirect": true
+		},
+		{
+			"Path": "golang.org/x/sys",
+			"Version": "v0.5.0",
+			"Indirect": true
+		}
+	],
+	"Exclude": null,
+	"Replace": null,
+	"Retract": null,
+	"Tool": null
+}
+
+@@@@@ Added New Node: golang.org/x/text
+^^Go Mod Parsed Exists (Doesn't Fail)
+## Parent: golang.org/x/text | Child: golang.org/x/tools
+Key Doesn't Exist. Need to create golang.org/x/tools
+###############NEW-CALL####################
+Path: /home/andrew/source-wand-projects/dc2d00e8-4362-4d0b-8e19-cd30aafd1fbc
+Module Name: golang.org/x/tools
+URL: https://go.googlesource.com/tools
+Version: v0.6.0
+-------------------------------------------
+Successfully created directory!
+Clone: 
+Checkout: 
+Go.Mod String: {
+	"Module": {
+		"Path": "golang.org/x/tools"
+	},
+	"Go": "1.18",
+	"Require": [
+		{
+			"Path": "github.com/yuin/goldmark",
+			"Version": "v1.4.13"
+		},
+		{
+			"Path": "golang.org/x/mod",
+			"Version": "v0.8.0"
+		},
+		{
+			"Path": "golang.org/x/net",
+			"Version": "v0.6.0"
+		},
+		{
+			"Path": "golang.org/x/sys",
+			"Version": "v0.5.0"
+		},
+		{
+			"Path": "golang.org/x/sync",
+			"Version": "v0.1.0"
+		}
+	],
+	"Exclude": null,
+	"Replace": null,
+	"Retract": null,
+	"Tool": null
+}
+
+@@@@@ Added New Node: golang.org/x/tools
+^^Go Mod Parsed Exists (Doesn't Fail)
+## Parent: golang.org/x/tools | Child: github.com/yuin/goldmark
+Key Doesn't Exist. Need to create github.com/yuin/goldmark
+###############NEW-CALL####################
+Path: /home/andrew/source-wand-projects/51792886-35a1-41c3-bc81-0d20c904f131
+Module Name: github.com/yuin/goldmark
+URL: https://github.com/yuin/goldmark
+Version: v1.4.13
+-------------------------------------------
+Successfully created directory!
+Clone: 
+Checkout: 
+Go.Mod String: {
+	"Module": {
+		"Path": "github.com/yuin/goldmark"
+	},
+	"Go": "1.18",
+	"Require": null,
+	"Exclude": null,
+	"Replace": null,
+	"Retract": null,
+	"Tool": null
+}
+
+@@@@@ Added New Node: github.com/yuin/goldmark
+^^Go Mod Parsed Exists (Doesn't Fail)
+dependency golang.org/x/tools has dep github.com/yuin/goldmark
+## Parent: golang.org/x/tools | Child: golang.org/x/mod
+Key Doesn't Exist. Need to create golang.org/x/mod
+###############NEW-CALL####################
+Path: /home/andrew/source-wand-projects/e088be2e-5659-47a7-a01f-970bc40b5360
+Module Name: golang.org/x/mod
+URL: https://go.googlesource.com/mod
+Version: v0.8.0
+-------------------------------------------
+Successfully created directory!
+Clone: 
+Checkout: 
+Go.Mod String: {
+	"Module": {
+		"Path": "golang.org/x/mod"
+	},
+	"Go": "1.17",
+	"Require": [
+		{
+			"Path": "golang.org/x/tools",
+			"Version": "v0.1.12"
+		}
+	],
+	"Exclude": null,
+	"Replace": null,
+	"Retract": null,
+	"Tool": null
+}
+
+@@@@@ Added New Node: golang.org/x/mod
+^^Go Mod Parsed Exists (Doesn't Fail)
+## Parent: golang.org/x/mod | Child: golang.org/x/tools
+Found the key
+dependency golang.org/x/mod has dep golang.org/x/tools
+dependency golang.org/x/tools has dep golang.org/x/mod
+## Parent: golang.org/x/tools | Child: golang.org/x/net
+Found the key
+dependency golang.org/x/tools has dep golang.org/x/net
+## Parent: golang.org/x/tools | Child: golang.org/x/sys
+Found the key
+dependency golang.org/x/tools has dep golang.org/x/sys
+## Parent: golang.org/x/tools | Child: golang.org/x/sync
+Key Doesn't Exist. Need to create golang.org/x/sync
+###############NEW-CALL####################
+Path: /home/andrew/source-wand-projects/31646135-9b03-40c9-b338-94a92ebb5d3f
+Module Name: golang.org/x/sync
+URL: https://go.googlesource.com/sync
+Version: v0.1.0
+-------------------------------------------
+Successfully created directory!
+Clone: 
+Checkout: 
+Go.Mod String: {
+	"Module": {
+		"Path": "golang.org/x/sync"
+	},
+	"Require": null,
+	"Exclude": null,
+	"Replace": null,
+	"Retract": null,
+	"Tool": null
+}
+
+@@@@@ Added New Node: golang.org/x/sync
+dependency golang.org/x/tools has dep golang.org/x/sync
+dependency golang.org/x/text has dep golang.org/x/tools
+## Parent: golang.org/x/text | Child: golang.org/x/mod
+Found the key
+dependency golang.org/x/text has dep golang.org/x/mod
+## Parent: golang.org/x/text | Child: golang.org/x/sys
+Found the key
+dependency golang.org/x/text has dep golang.org/x/sys
+dependency golang.org/x/net has dep golang.org/x/text
+dependency golang.org/x/crypto has dep golang.org/x/net
+## Parent: golang.org/x/crypto | Child: golang.org/x/sys
+Found the key
+dependency golang.org/x/crypto has dep golang.org/x/sys
+## Parent: golang.org/x/crypto | Child: golang.org/x/term
+Found the key
+dependency golang.org/x/crypto has dep golang.org/x/term
+## Parent: golang.org/x/crypto | Child: golang.org/x/text
+Found the key
+dependency golang.org/x/crypto has dep golang.org/x/text
+dependency github.com/canonical/chisel has dep golang.org/x/crypto
+## Parent: github.com/canonical/chisel | Child: golang.org/x/term
+Found the key
+dependency github.com/canonical/chisel has dep golang.org/x/term
+## Parent: github.com/canonical/chisel | Child: gopkg.in/check.v1
+Key Doesn't Exist. Need to create gopkg.in/check.v1
+###############NEW-CALL####################
+Path: /home/andrew/source-wand-projects/a04dc991-1dd2-4db5-84a2-a0c43e4f686f
+Module Name: gopkg.in/check.v1
+URL: https://gopkg.in/check.v1
+Version: v1.0.0-20201130134442-10cb98267c6c
+-------------------------------------------
+Successfully created directory!
+Clone: 
+Checkout: 
+Go.Mod String: {
+	"Module": {
+		"Path": "gopkg.in/check.v1"
+	},
+	"Go": "1.11",
+	"Require": [
+		{
+			"Path": "github.com/kr/pretty",
+			"Version": "v0.2.1"
+		}
+	],
+	"Exclude": null,
+	"Replace": null,
+	"Retract": null,
+	"Tool": null
+}
+
+@@@@@ Added New Node: gopkg.in/check.v1
+^^Go Mod Parsed Exists (Doesn't Fail)
+## Parent: gopkg.in/check.v1 | Child: github.com/kr/pretty
+Key Doesn't Exist. Need to create github.com/kr/pretty
+###############NEW-CALL####################
+Path: /home/andrew/source-wand-projects/ce5516f1-a3b0-4384-b8dc-112e2cfead86
+Module Name: github.com/kr/pretty
+URL: https://github.com/kr/pretty
+Version: v0.2.1
+-------------------------------------------
+Successfully created directory!
+Clone: 
+Checkout: 
+Go.Mod String: {
+	"Module": {
+		"Path": "github.com/kr/pretty"
+	},
+	"Go": "1.12",
+	"Require": [
+		{
+			"Path": "github.com/kr/text",
+			"Version": "v0.1.0"
+		}
+	],
+	"Exclude": null,
+	"Replace": null,
+	"Retract": null,
+	"Tool": null
+}
+
+@@@@@ Added New Node: github.com/kr/pretty
+^^Go Mod Parsed Exists (Doesn't Fail)
+## Parent: github.com/kr/pretty | Child: github.com/kr/text
+Key Doesn't Exist. Need to create github.com/kr/text
+###############NEW-CALL####################
+Path: /home/andrew/source-wand-projects/3cc60d92-d51f-452d-9f75-1c70fd64e106
+Module Name: github.com/kr/text
+URL: https://github.com/kr/text
+Version: v0.1.0
+-------------------------------------------
+Successfully created directory!
+Clone: 
+Checkout: 
+Go.Mod String: {
+	"Module": {
+		"Path": "github.com/kr/text"
+	},
+	"Require": [
+		{
+			"Path": "github.com/kr/pty",
+			"Version": "v1.1.1"
+		}
+	],
+	"Exclude": null,
+	"Replace": null,
+	"Retract": null,
+	"Tool": null
+}
+
+@@@@@ Added New Node: github.com/kr/text
+dependency github.com/kr/pretty has dep github.com/kr/text
+dependency gopkg.in/check.v1 has dep github.com/kr/pretty
+dependency github.com/canonical/chisel has dep gopkg.in/check.v1
+## Parent: github.com/canonical/chisel | Child: gopkg.in/yaml.v3
+Key Doesn't Exist. Need to create gopkg.in/yaml.v3
+###############NEW-CALL####################
+Path: /home/andrew/source-wand-projects/a6e2c879-6e2b-4203-b5b4-6f1ea09b9d7b
+Module Name: gopkg.in/yaml.v3
+URL: https://gopkg.in/yaml.v3
+Version: v3.0.1
+-------------------------------------------
+Successfully created directory!
+Clone: 
+Checkout: 
+Go.Mod String: {
+	"Module": {
+		"Path": "gopkg.in/yaml.v3"
+	},
+	"Require": [
+		{
+			"Path": "gopkg.in/check.v1",
+			"Version": "v0.0.0-20161208181325-20d25e280405"
+		}
+	],
+	"Exclude": null,
+	"Replace": null,
+	"Retract": null,
+	"Tool": null
+}
+
+@@@@@ Added New Node: gopkg.in/yaml.v3
+dependency github.com/canonical/chisel has dep gopkg.in/yaml.v3
+## Parent: github.com/canonical/chisel | Child: github.com/google/go-cmp
+Found the key
+dependency github.com/canonical/chisel has dep github.com/google/go-cmp
+## Parent: github.com/canonical/chisel | Child: github.com/kr/pretty
+Found the key
+dependency github.com/canonical/chisel has dep github.com/kr/pretty
+## Parent: github.com/canonical/chisel | Child: github.com/kr/text
+Found the key
+dependency github.com/canonical/chisel has dep github.com/kr/text
+## Parent: github.com/canonical/chisel | Child: github.com/rogpeppe/go-internal
+Key Doesn't Exist. Need to create github.com/rogpeppe/go-internal
+###############NEW-CALL####################
+Path: /home/andrew/source-wand-projects/c3e741fd-7039-4b63-ae35-54ce204e2b93
+Module Name: github.com/rogpeppe/go-internal
+URL: https://github.com/rogpeppe/go-internal
+Version: v1.14.1
+-------------------------------------------
+Successfully created directory!
+Clone: 
+Checkout: 
+Go.Mod String: {
+	"Module": {
+		"Path": "github.com/rogpeppe/go-internal"
+	},
+	"Go": "1.23",
+	"Require": [
+		{
+			"Path": "golang.org/x/mod",
+			"Version": "v0.21.0"
+		},
+		{
+			"Path": "golang.org/x/sys",
+			"Version": "v0.26.0"
+		},
+		{
+			"Path": "golang.org/x/tools",
+			"Version": "v0.26.0"
+		}
+	],
+	"Exclude": null,
+	"Replace": null,
+	"Retract": null,
+	"Tool": null
+}
+
+@@@@@ Added New Node: github.com/rogpeppe/go-internal
+^^Go Mod Parsed Exists (Doesn't Fail)
+## Parent: github.com/rogpeppe/go-internal | Child: golang.org/x/mod
+Found the key
+dependency github.com/rogpeppe/go-internal has dep golang.org/x/mod
+## Parent: github.com/rogpeppe/go-internal | Child: golang.org/x/sys
+Found the key
+dependency github.com/rogpeppe/go-internal has dep golang.org/x/sys
+## Parent: github.com/rogpeppe/go-internal | Child: golang.org/x/tools
+Found the key
+dependency github.com/rogpeppe/go-internal has dep golang.org/x/tools
+dependency github.com/canonical/chisel has dep github.com/rogpeppe/go-internal
+## Parent: github.com/canonical/chisel | Child: golang.org/x/sys
+Found the key
+dependency github.com/canonical/chisel has dep golang.org/x/sys
+Graph Nodes and Dependencies:
+Node: github.com/klauspost/compress
+Node: gopkg.in/check.v1 -> Dependencies: ["github.com/kr/pretty"]
+Node: go.starlark.net -> Dependencies: ["github.com/google/go-cmp", "golang.org/x/sys", "golang.org/x/term", "google.golang.org/protobuf", "golang.org/x/xerrors"]
+Node: google.golang.org/protobuf -> Dependencies: ["github.com/golang/protobuf", "github.com/google/go-cmp", "golang.org/x/xerrors"]
+Node: github.com/yuin/goldmark
+Node: gopkg.in/yaml.v3
+Node: github.com/rogpeppe/go-internal -> Dependencies: ["golang.org/x/mod", "golang.org/x/sys", "golang.org/x/tools"]
+Node: github.com/golang/protobuf -> Dependencies: ["github.com/google/go-cmp", "google.golang.org/protobuf"]
+Node: github.com/kr/text
+Node: golang.org/x/text -> Dependencies: ["golang.org/x/tools", "golang.org/x/mod", "golang.org/x/sys"]
+Node: golang.org/x/crypto -> Dependencies: ["golang.org/x/net", "golang.org/x/sys", "golang.org/x/term", "golang.org/x/text"]
+Node: golang.org/x/sys
+Node: github.com/ulikunitz/xz
+Node: github.com/jessevdk/go-flags -> Dependencies: ["golang.org/x/sys"]
+Node: github.com/google/go-cmp -> Dependencies: ["golang.org/x/xerrors"]
+Node: golang.org/x/xerrors
+Node: golang.org/x/sync
+Node: golang.org/x/tools -> Dependencies: ["github.com/yuin/goldmark", "golang.org/x/mod", "golang.org/x/net", "golang.org/x/sys", "golang.org/x/sync"]
+Node: github.com/kr/pretty -> Dependencies: ["github.com/kr/text"]
+Node: golang.org/x/mod -> Dependencies: ["golang.org/x/tools"]
+Node: golang.org/x/net -> Dependencies: ["golang.org/x/crypto", "golang.org/x/sys", "golang.org/x/term", "golang.org/x/text"]
+Node: github.com/canonical/chisel -> Dependencies: ["github.com/jessevdk/go-flags", "github.com/klauspost/compress", "github.com/ulikunitz/xz", "go.starlark.net", "golang.org/x/crypto", "golang.org/x/term", "gopkg.in/check.v1", "gopkg.in/yaml.v3", "github.com/google/go-cmp", "github.com/kr/pretty", "github.com/kr/text", "github.com/rogpeppe/go-internal", "golang.org/x/sys"]
+Node: golang.org/x/term -> Dependencies: ["golang.org/x/sys"]

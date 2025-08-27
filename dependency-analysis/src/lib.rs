@@ -9,14 +9,13 @@ use dependency_tree_generators::generate_dependency_tree;
 use dependency_tree_node::DependencyTreeNode;
 use dependency_tree_request::DependencyTreeRequest;
 use source_wand_common::{
-    dependency_ensurer::required_dependency::AnyRequiredDependency,
-    project_manipulator::{
+    dependency_ensurer::required_dependency::AnyRequiredDependency, project, project_manipulator::{
         local_project_manipulator::LocalProjectManipulator,
         project_manipulator::{AnyProjectManipulator, ProjectManipulator}
 }};
 use uuid::Uuid;
 
-use crate::{build_requirements_generator::generate_build_requirements, unique_dependencies_list::UniqueDependenciesList};
+use crate::{build_requirements_generator::generate_build_requirements, dependency_tree_generators::{go_dependency_tree_generator_andrew::generate_go_dependency_tree_andrew, go_depenendency_tree_struct::{DependencyTreeNodeGo, Graph}}, unique_dependencies_list::UniqueDependenciesList};
 
 pub mod dependency_tree_node;
 pub mod dependency_tree_map;
@@ -30,21 +29,19 @@ pub mod dependency_tree_generators;
 pub mod build_requirements_generator;
 
 pub fn find_dependency_tree(request: DependencyTreeRequest) -> Result<DependencyTreeNode> {
+    let project_root: PathBuf = PathBuf::from(format!(
+        "{}/source-wand-projects/{}",
+        std::env::var("HOME")?,
+        Uuid::new_v4().to_string()
+    ));
+    //let project_root_clone: PathBuf = project_root.clone();
     let project_manipulator: AnyProjectManipulator = match request {
         DependencyTreeRequest::LocalProject { path } => {
             LocalProjectManipulator::new(path, false).to_any()
         },
         DependencyTreeRequest::GitProject { url, branch } => {
-            let project_root: PathBuf = PathBuf::from(format!(
-                "{}/source-wand-projects/{}",
-                std::env::var("HOME")?,
-                Uuid::new_v4().to_string()
-            ));
-
             fs::create_dir_all(&project_root)?;
-
-            let manipulator: LocalProjectManipulator = LocalProjectManipulator::new(project_root, true);
-
+            let manipulator: LocalProjectManipulator = LocalProjectManipulator::new(project_root, false);
             manipulator.try_run_shell(
                 format!(
                     "git clone \"{}\" .",
@@ -52,11 +49,9 @@ pub fn find_dependency_tree(request: DependencyTreeRequest) -> Result<Dependency
                 ),
                 20
             )?;
-
             if let Some(branch) = branch {
                 manipulator.run_shell(format!("git checkout {}", branch))?;
             }
-
             manipulator.to_any()
         },
         _ => { todo!() },
@@ -67,13 +62,63 @@ pub fn find_dependency_tree(request: DependencyTreeRequest) -> Result<Dependency
     // let dependencies: Vec<AnyRequiredDependency> = build_system.get_required_dependencies();
     // project_manipulator.ensure_dependencies(dependencies)?;
 
-    let dependency_tree: Result<DependencyTreeNode> = generate_dependency_tree(build_system, &project_manipulator);
+    let dependency_tree: Result<DependencyTreeNode> = generate_dependency_tree(
+        build_system, &project_manipulator);
+    // , &project_root_clone
     project_manipulator.cleanup();
 
     dependency_tree
 }
+/////////////////////////////////////////////////
+pub fn find_dependency_tree_andrew(request: DependencyTreeRequest) -> 
+    Result<Graph<DependencyTreeNodeGo, String>> {
+    let project_root: PathBuf = PathBuf::from(format!(
+        "{}/source-wand-projects/{}",
+        std::env::var("HOME")?,
+        Uuid::new_v4().to_string()
+    ));
+    let (url, branch): (String, String) = match request {
+        DependencyTreeRequest::LocalProject { path } => {
+                        ("".to_string(), "".to_string())
+            }
+        DependencyTreeRequest::GitProject { url, branch } => {
+                (url, match branch {
+                    Some(s) => s,
+                    None => "".to_string()
+                })
+            },
+DependencyTreeRequest::NameBased { name, version } => todo!(),
+    };
+    //let project_root_clone: PathBuf = project_root.clone();
+    //let project_manipulator: AnyProjectManipulator = match request {
+    //    DependencyTreeRequest::LocalProject { path } => {
+    //        LocalProjectManipulator::new(path, false).to_any()
+    //    },
+    //    DependencyTreeRequest::GitProject { url, branch } => {
+    //        fs::create_dir_all(&project_root)?;
+    //        let manipulator: LocalProjectManipulator = LocalProjectManipulator::new(project_root, false);
+    //        manipulator.try_run_shell(
+    //            format!(
+    //                "git clone \"{}\" .",
+    //                url,
+    //            ),
+    //            20
+    //        )?;
+    //        if let Some(branch) = branch {
+    //            manipulator.run_shell(format!("git checkout {}", branch))?;
+    //        }
+    //        manipulator.to_any()
+    //    },
+    //    _ => { todo!() },
+    //};
+    let graph: Result<Graph<DependencyTreeNodeGo, String>> = generate_go_dependency_tree_andrew(&url, &branch, &project_root);
+    graph
+}
 
 
+
+
+/////////////////////////////////////////////////
 pub fn find_build_requirements(request: DependencyTreeRequest, dependency_tree: &DependencyTreeNode) -> Result<UniqueDependenciesList> {
     let project_manipulator: AnyProjectManipulator = match request {
         DependencyTreeRequest::LocalProject { path } => {

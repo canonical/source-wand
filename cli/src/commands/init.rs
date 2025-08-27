@@ -50,6 +50,7 @@ pub fn _init_command(args: &InitArgs) -> Result<()> {
     println!("Planning project onboarding");
 
     println!(" > Generating dependency tree");
+    // EDIT: Need to make this into a graph
     let dependency_tree: DependencyTreeNode = match &args.command {
         InitCommand::Local(args) => {
             find_dependency_tree(

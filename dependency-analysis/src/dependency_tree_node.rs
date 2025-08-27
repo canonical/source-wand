@@ -6,13 +6,15 @@ use source_wand_common::project::Project;
 pub struct DependencyTreeNode {
     pub project: Project,
     pub dependencies: Vec<Box<DependencyTreeNode>>,
+    //pub rdependencies: Vec<Box<DependencyTreeNode>>,
 }
-
+// rdependencies: Vec<Box<DependencyTreeNode>>
 impl DependencyTreeNode {
-    pub fn new(project: Project, dependencies: Vec<Box<DependencyTreeNode>>) -> Self {
+    pub fn new(project: Project, dependencies: Vec<Box<DependencyTreeNode>>,) -> Self {
         DependencyTreeNode {
             project,
             dependencies,
+            //rdependencies
         }
     }
 

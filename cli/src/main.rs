@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use commands::{
@@ -6,6 +8,8 @@ use commands::{
         DependenciesArgs
     }
 };
+use source_wand_dependency_analysis::dependency_tree_generators::{go_dependency_tree_generator_andrew::parse_dependency, go_depenendency_tree_struct::{DependencyTreeNodeGo, Graph}};
+use uuid::Uuid;
 
 use crate::commands::replication::{replicate_command, ReplicationArgs};
 
@@ -26,9 +30,19 @@ enum Command {
     Replication(ReplicationArgs)
 }
 
-fn main() -> Result<()> {
-    match Cli::parse().command {
-        Command::Dependencies(args) => dependencies_command(&args),
-        Command::Replication(args) => replicate_command(&args),
-    }
+//fn main() -> Result<()> {
+//    match Cli::parse().command {
+//        Command::Dependencies(args) => dependencies_command(&args),
+//        Command::Replication(args) => replicate_command(&args),
+//    }
+//}
+
+fn main() {
+    let url: String = "https://github.com/canonical/chisel".to_string();
+    let version: String = "v1.2.0".to_string();
+    let project_root: PathBuf = PathBuf::from("/home/andrew/source-wand-projects");
+    let module_name: String = "github.com/canonical/chisel".to_string();
+    let mut graph: Graph<DependencyTreeNodeGo, String> = Graph::new();
+    parse_dependency(&url, &version, &project_root, &module_name, &mut graph); 
+    graph.print();
 }
