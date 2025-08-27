@@ -8,14 +8,24 @@ use source_wand_common::project::Project;
 #[derive(Debug, Clone)]
 pub struct DependencyTreeNode {
     pub project: Project,
+<<<<<<< HEAD
     pub dependencies: Vec<Arc<Mutex<DependencyTreeNode>>>,
+=======
+    pub dependencies: Vec<Box<DependencyTreeNode>>,
+    //pub rdependencies: Vec<Box<DependencyTreeNode>>,
+>>>>>>> 516fbe8 (Can create a Graph)
 }
-
+// rdependencies: Vec<Box<DependencyTreeNode>>
 impl DependencyTreeNode {
+<<<<<<< HEAD
     pub fn new(project: Project, dependencies: Vec<Arc<Mutex<DependencyTreeNode>>>) -> Self {
+=======
+    pub fn new(project: Project, dependencies: Vec<Box<DependencyTreeNode>>,) -> Self {
+>>>>>>> 516fbe8 (Can create a Graph)
         DependencyTreeNode {
             project,
             dependencies,
+            //rdependencies
         }
     }
 
