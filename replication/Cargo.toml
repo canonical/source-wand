@@ -12,3 +12,4 @@ serde = { version = "1.0.219", features = ["derive"] }
 uuid = { version = "1.18.0", features = ["v4"] }
 
 source-wand-common = { path = "../common" }
+readonly = "0.2.13"

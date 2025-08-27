@@ -1,23 +1,34 @@
 use anyhow::Result;
 use source_wand_common::project_manipulator::project_manipulator::ProjectManipulator;
 
-use crate::plan::{context::Context, transformation::Transformation};
+use crate::{model::replication_config::GitIdentity, plan::{context::Context, transformation::Transformation}};
 
 #[derive(Debug, Clone)]
 pub struct GitInit {
     repository_url: String,
     reference: String,
+    git_identity: Option<GitIdentity>,
 }
 
 impl GitInit {
-    pub fn new(repository_url: String, reference: String) -> Self {
-        GitInit { repository_url, reference }
+    pub fn new(
+        repository_url: String,
+        reference: String,
+        git_identity: Option<GitIdentity>,
+    ) -> Self {
+        GitInit { repository_url, reference, git_identity }
     }
 }
 
 impl Transformation for GitInit {
     fn apply(&self, ctx: Context) -> Result<Context> {
         ctx.sh.run_shell("git init".to_string())?;
+
+        if let Some(git_identity) = &self.git_identity {
+            ctx.sh.run_shell(format!("git config --local user.name {}", git_identity.username))?;
+            ctx.sh.run_shell(format!("git config --local user.email {}", git_identity.email))?;
+        }
+
         ctx.sh.run_shell(format!("git remote add origin {}", self.repository_url))?;
         ctx.sh.run_shell(format!("git checkout --orphan {}", self.reference))?;
 

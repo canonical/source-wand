@@ -21,6 +21,7 @@ pub fn replicate_init_command(_args: &ReplicationInitArgs) -> Result<()> {
         Some(Hooks { before_all: None, before_each: None, after_each: None, after_all: None }),
         PackageOriginGit::new("<url to your project's repository>".to_string(), "<reference to checkout>".to_string()),
         PackageDestinationGit::new("<where to replicate your project>".to_string(), "<reference to push>".to_string()),
+        None,
     );
 
     write_yaml_file(&replication_manifest, "replication.yaml")?;

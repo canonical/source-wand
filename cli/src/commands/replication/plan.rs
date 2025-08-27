@@ -17,7 +17,7 @@ use source_wand_dependency_analysis::{
     dependency_tree_request::DependencyTreeRequest,
     find_dependency_tree
 };
-use source_wand_replication::model::{
+use source_wand_replication::{model::{
     dependency::Dependency,
     package::Package,
     package_destination::PackageDestination,
@@ -26,7 +26,7 @@ use source_wand_replication::model::{
     package_origin_go_cache::PackageOriginGoCache,
     replication_manifest::ReplicationManifest,
     replication_plan::ReplicationPlan
-};
+}, plan::environment::Environment};
 use uuid::Uuid;
 
 #[derive(Debug, Parser)]
@@ -75,7 +75,8 @@ pub fn plan_replication() -> Result<ReplicationPlan> {
                             .unwrap()
                             .as_str()
                             .unwrap_or_default()
-                            .replace("/", "-");
+                            .replace("/", "-")
+                            .replace(".", "-");
 
                         let version: String = build_dependency.get("Version")
                             .unwrap_or(
@@ -95,46 +96,7 @@ pub fn plan_replication() -> Result<ReplicationPlan> {
                             .unwrap_or_default()
                             .to_string();
 
-                        let environment: Environment = {
-                            let mut major: String = String::new();
-                            let mut minor: String = String::new();
-                            let mut patch: String = String::new();
-                            let mut suffix: String = String::new();
-
-                            if version.starts_with('v') {
-                                let parts: Vec<&str> = version.trim_start_matches('v').split('-').collect();
-                                let semantic_version_parts: Vec<&str> = parts[0].split('.').collect();
-
-                                if semantic_version_parts.len() > 0 {
-                                    major = semantic_version_parts[0].to_string();
-                                }
-                                if semantic_version_parts.len() > 1 {
-                                    minor = semantic_version_parts[1].to_string();
-                                }
-                                if semantic_version_parts.len() > 2 {
-                                    patch = semantic_version_parts[2].to_string();
-                                }
-
-                                if parts.len() > 1 {
-                                    suffix = format!("-{}", parts[1..].join("-"));
-                                }
-                            }
-
-                            let retrocompatible: String =
-                                if suffix.is_empty() {
-                                    if major == "0".to_string() {
-                                        format!("{}.{}.{}", major.clone(), minor, patch)
-                                    }
-                                    else {
-                                        major.clone()
-                                    }
-                                }
-                                else {
-                                    format!("{}.{}.{}-{}", major, minor, patch, suffix)
-                                };
-
-                            Environment::new(name.clone(), version, major, minor, patch, suffix, retrocompatible)
-                        };
+                        let environment: Environment = Environment::new(&name, &version);
 
                         let PackageDestination::Git(package_destination) = &replication_manifest.destination_template;
                         let package_destination_url: String = environment.apply(&package_destination.git);
@@ -147,8 +109,8 @@ pub fn plan_replication() -> Result<ReplicationPlan> {
 
                         let package: Package = Package::new(
                             PackageOriginGoCache::new(
-                                environment.name,
-                                environment.version,
+                                environment.name.clone(),
+                                environment.version.clone(),
                                 cache_path
                             ),
                             PackageDestinationGit::new(
@@ -164,7 +126,12 @@ pub fn plan_replication() -> Result<ReplicationPlan> {
             }
             top_level.cleanup();
 
-            let replication_plan: ReplicationPlan = ReplicationPlan::new(replication_manifest.project, replication_manifest.hooks, packages);
+            let replication_plan: ReplicationPlan = ReplicationPlan::new(
+                replication_manifest.project,
+                replication_manifest.hooks,
+                packages,
+                replication_manifest.config,
+            );
 
             Ok(replication_plan)
         },
@@ -172,56 +139,17 @@ pub fn plan_replication() -> Result<ReplicationPlan> {
     }
 }
 
-struct Environment {
-    name: String,
-    version: String,
-    version_major: String,
-    version_minor: String,
-    version_patch: String,
-    version_suffix: String,
-    version_retrocompatible: String,
-}
-
-impl Environment {
-    pub fn new(
-        name: String,
-        version: String,
-        version_major: String,
-        version_minor: String,
-        version_patch: String,
-        version_suffix: String,
-        version_retrocompatible: String,
-    ) -> Self {
-        Environment {
-            name,
-            version,
-            version_major,
-            version_minor,
-            version_patch,
-            version_suffix,
-            version_retrocompatible
-        }
-    }
-
-    pub fn apply(&self, template: &String) -> String {
-        template
-            .replace("$NAME", &self.name)
-            .replace("$VERSION_MAJOR", &self.version_major)
-            .replace("$VERSION_MINOR", &self.version_minor)
-            .replace("$VERSION_PATCH", &self.version_patch)
-            .replace("$VERSION_SUFFIX", &self.version_suffix)
-            .replace("$VERSION_RETROCOMPATIBLE", &self.version_retrocompatible)
-            .replace("$VERSION", &self.version)
-    }
-}
-
 fn find_dependencies_for_package(root: &DependencyTreeNode, package_name: &str) -> Vec<Dependency> {
-    if root.project.name.replace("/", "-") == package_name {
+    if root.project.name.replace("/", "-").replace(".", "-") == package_name {
         return root.dependencies
             .iter()
-            .map(|dep| Dependency {
-                name: dep.project.name.replace("/", "-"),
-                version: dep.project.version.clone(),
+            .map(|dep| {
+                let environment: Environment = Environment::new(&dep.project.name, &dep.project.version);
+
+                Dependency {
+                    name: environment.name.replace("/", "-").replace(".", "-"),
+                    version: format!("{}-24.04", environment.version_retrocompatible),
+                }
             })
             .collect();
     }

@@ -1,3 +1,4 @@
+pub mod replication_config;
 pub mod replication_manifest;
 pub mod replication_plan;
 

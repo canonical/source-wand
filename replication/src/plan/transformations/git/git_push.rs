@@ -10,7 +10,10 @@ pub struct GitPush {
 }
 
 impl GitPush {
-    pub fn new(repository_url: String, reference: String) -> Self {
+    pub fn new(
+        repository_url: String,
+        reference: String,
+    ) -> Self {
         GitPush { repository_url, reference }
     }
 }
