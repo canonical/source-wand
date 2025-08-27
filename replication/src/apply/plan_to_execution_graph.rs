@@ -59,6 +59,7 @@ impl ReplicationPlan {
                         "ubuntu@24.04".to_string(),
                         vec!["amd64".to_string()],
                         package.dependencies.clone(),
+                        package.is_library,
                     )),
                     dependencies: vec![id + 2],
                     dependents: vec![]

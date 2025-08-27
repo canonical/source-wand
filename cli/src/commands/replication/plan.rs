@@ -57,7 +57,7 @@ pub fn plan_replication() -> Result<ReplicationPlan> {
 
             let dependency_tree: DependencyTreeNode = find_dependency_tree(
                 DependencyTreeRequest::from_git_project(
-                    origin.git,
+                    origin.git.clone(),
                     Some(origin.reference.clone())
                 )
             )?;
@@ -118,6 +118,7 @@ pub fn plan_replication() -> Result<ReplicationPlan> {
                                 package_destination_reference,
                             ),
                             dependencies,
+                            !origin.git.clone().replace("/", "-").replace(".", "-").ends_with(&environment.name)
                         );
 
                         packages.push(package);
