@@ -76,41 +76,41 @@ fn get_version(version_string: &str) -> &str {
  * 3. Feed to the parse_dependency (starting) -> have it return the graph
  * 
  */
-pub fn generate_go_dependency_tree_andrew(url: &String, version: &String, project_root: &PathBuf) -> Result<Graph<DependencyTreeNodeGo, String>> {
-    let mut graph: Graph<DependencyTreeNodeGo, String> = Graph::new();
-    let project_manipulator: LocalProjectManipulator = clone_repo(url, version, project_root);
-    let _go_mod: String = match project_manipulator.run_shell("go mod edit -json".to_string()) {
-        Ok(str) => str,
-        Err(e) => e.to_string(), // Deal with error better in future
-    }; //TODO: #now Error handling
-    let _go_mod_parsed: Option<GoModFile> = match serde_json::from_str(&_go_mod) { //TODO: #now Error handling
-        Ok(gm) => gm,
-        Err(e) => {
-            eprintln!("Failed to deserialize: {}", e);
-            None
-        }
-    };
-    let checkout: String = version.clone();
-
-    let new_project: GoProject = GoProject::new("github.com/canonical/chisel".to_string(), url.clone(), checkout);
-    let new_node: DependencyTreeNodeGo = DependencyTreeNodeGo::new(new_project);
-    graph.add_node("github.com/canonical/chisel".to_string().clone(), new_node);
-    if _go_mod_parsed.is_some() {
-        let go_mod_parsed: GoModFile = _go_mod_parsed.unwrap();
-        for dep in &go_mod_parsed.require { // Change into a map
-            let parent: String = go_mod_parsed.module.path.clone(); // The key doesn't include version
-            let child: String = dep.path.clone();
-            if graph.does_key_exist(&parent) {
-                println!("Found the key");
-            } else {
-                // Create The Dependency
-                parse_dependency(&dep.path, &dep.version, &project_root, &dep.path, &mut graph);
-            }
-            graph.add_edge(&parent, &child);
-        }
-    }
-    Ok(graph)
-}
+//pub fn generate_go_dependency_tree_andrew(url: &String, version: &String, project_root: &PathBuf) -> Result<Graph<DependencyTreeNodeGo, String>> {
+//    let mut graph: Graph<DependencyTreeNodeGo, String> = Graph::new();
+//    let project_manipulator: LocalProjectManipulator = clone_repo(url, version, project_root);
+//    let _go_mod: String = match project_manipulator.run_shell("go mod edit -json".to_string()) {
+//        Ok(str) => str,
+//        Err(e) => e.to_string(), // Deal with error better in future
+//    }; //TODO: #now Error handling
+//    let _go_mod_parsed: Option<GoModFile> = match serde_json::from_str(&_go_mod) { //TODO: #now Error handling
+//        Ok(gm) => gm,
+//        Err(e) => {
+//            eprintln!("Failed to deserialize: {}", e);
+//            None
+//        }
+//    };
+//    let checkout: String = version.clone();
+//
+//    let new_project: GoProject = GoProject::new("github.com/canonical/chisel".to_string(), url.clone(), checkout);
+//    let new_node: DependencyTreeNodeGo = DependencyTreeNodeGo::new(new_project);
+//    graph.add_node("github.com/canonical/chisel".to_string().clone(), new_node);
+//    if _go_mod_parsed.is_some() {
+//        let go_mod_parsed: GoModFile = _go_mod_parsed.unwrap();
+//        for dep in &go_mod_parsed.require { // Change into a map
+//            let parent: String = go_mod_parsed.module.path.clone(); // The key doesn't include version
+//            let child: String = dep.path.clone();
+//            if graph.does_key_exist(&parent) {
+//                println!("Found the key");
+//            } else {
+//                // Create The Dependency
+//                parse_dependency(&dep.path, &dep.version, &project_root, &dep.path, &mut graph);
+//            }
+//            graph.add_depends(&parent, &child);
+//        }
+//    }
+//    Ok(graph)
+//}
 
 /**
  * 
@@ -124,18 +124,25 @@ pub fn parse_dependency<'a>(
     module_name: &'a String,
     graph: &'a mut Graph<DependencyTreeNodeGo, String>,
 ) {
+    ///////////////////////// PRINT ///////////////////////////
+    println!("###############NEW-CALL####################");
+    println!("Module Name: {}", &module_name);
+    println!("URL: {}", &url);
+    println!("Version: {}", &version);
+    println!("-------------------------------------------");
+    ///////////////////////// PRINT ///////////////////////////
+    //########## TODO #################
+    // TODO: Check if the package is in sourcecraft. If it is, just create the node
+    // 1. Module Name -> Check the Database (See if there is a sourcecraft name)
+    // 2. Sourcecraft Name (+ version)) -> API (See if there is a track at the version)
 
+    //########## TODO #################
+    // STEP: Clone the repository & parse the Go.Mod
     let path: PathBuf = PathBuf::from(format!(
         "{}/{}",
         project_root.to_string_lossy(),
         Uuid::new_v4().to_string()
     ));
-    println!("###############NEW-CALL####################");
-    println!("Path: {}", &path.to_string_lossy());
-    println!("Module Name: {}", &module_name);
-    println!("URL: {}", &url);
-    println!("Version: {}", &version);
-    println!("-------------------------------------------");
     let project_manipulator: LocalProjectManipulator = clone_repo(url, version, &path);
     let _ = project_manipulator.run_shell("sed -i 's/^go 1\\..*/go 1.18.0/' go.mod".to_string());
     let _ = project_manipulator.run_shell(format!("go mod init {}", &module_name));
@@ -155,33 +162,48 @@ pub fn parse_dependency<'a>(
             None
         }
     };
-    let checkout: String = version.clone();
+    // STEP: Create A New Project //
+    // # Fields
+    let mut checkout = String::new();
+    let mut subdirectory = String::new();
+    match fetch_checkout(&module_name, &version, &url) {
+        Ok((checkout_vers, path)) => {
+            match checkout_vers {
+                Some(data) => checkout = data,
+                None => checkout = String::from(""),
+            }
+            match path {
+                Some(data2) => subdirectory = data2,
+                None => subdirectory = String::from(""),
+            }
+        } Err(_e) => {
 
-    let new_project: GoProject = GoProject::new(module_name.clone(), url.clone(), checkout);
+        }
+    }
+
+    let new_project: GoProject = GoProject::new(module_name.clone(), checkout.clone(), url.clone(), checkout.clone());
     let new_node: DependencyTreeNodeGo = DependencyTreeNodeGo::new(new_project);
+    // Add key as Module-Version(Checkout)
     graph.add_node(module_name.clone(), new_node);
-    println!("@@@@@ Added New Node: {}", module_name);
+    println!("@@@@@ Added New Node: {}-{}", module_name, checkout);
 
     if _go_mod_parsed.is_some() {
         println!("^^Go Mod Parsed Exists (Doesn't Fail)");
         let go_mod_parsed: GoModFile = _go_mod_parsed.unwrap();
-        for dep in &go_mod_parsed.require { // Change into a map
-            let parent: String = go_mod_parsed.module.path.clone(); // The key doesn't include version
+        for dep in &go_mod_parsed.require {
+            let parent: String = go_mod_parsed.module.path.clone();
             let child: String = dep.path.clone();
             println!("## Parent: {} | Child: {}", &parent, &child);
             if graph.does_key_exist(&child) {
                 println!("Found the key");
-                graph.add_depends(&parent, &child);
-                println!("@@@@ dependency {} has dep {}", &parent, &child);
             } else {
-                // Create The Dependency
                 println!("Key Doesn't Exist. Need to create {}", &child);
                 let dep_url: String = get_repository_url(&dep.path);
                 parse_dependency(&dep_url, &dep.version, &project_root, &dep.path, graph);
-                graph.add_depends(&parent, &child);
-                //graph.add_edge(&child, &parent)
-                println!("@@@@ dependency {} has dep {}", &parent, &child);
             }
+            graph.add_depends(&parent, &child);
+            graph.add_rdepends(&child, &parent);
+            println!("@@@@ dependency {} has dep {}", &parent, &child);
         }
     }
     project_manipulator.cleanup();
@@ -339,15 +361,6 @@ fn fetch_checkout(name: &String, version: &String, repository: &String) -> Resul
 //}
 
 
-
-
-    // 3. Add the module to the tree
-    //name: module_name
-    //version: version
-    //checkout: version (but slightly different)
-    //license: TODO: This needs to be merged in
-    //repository_url: url (use get_repository_url)
-    //subdirectory (needed for sourcecraft) >> Monorepositories
     
 
 

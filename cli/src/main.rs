@@ -45,4 +45,5 @@ fn main() {
     let mut graph: Graph<DependencyTreeNodeGo, String> = Graph::new();
     parse_dependency(&url, &version, &project_root, &module_name, &mut graph); 
     graph.print();
+    //println!("{}", graph.to_dot());
 }
