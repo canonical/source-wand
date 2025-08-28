@@ -15,7 +15,7 @@ use source_wand_common::{
 }};
 use uuid::Uuid;
 
-use crate::{build_requirements_generator::generate_build_requirements, dependency_tree_generators::{go_dependency_tree_generator_andrew::generate_go_dependency_tree_andrew, go_depenendency_tree_struct::{DependencyTreeNodeGo, Graph}}, unique_dependencies_list::UniqueDependenciesList};
+use crate::{build_requirements_generator::generate_build_requirements, dependency_tree_generators::{go_depenendency_tree_struct::{DependencyTreeNodeGo, Graph}}, unique_dependencies_list::UniqueDependenciesList};
 
 pub mod dependency_tree_node;
 pub mod dependency_tree_map;
@@ -61,7 +61,6 @@ pub fn find_dependency_tree(request: DependencyTreeRequest) -> Result<Dependency
 
     dependency_tree
 }
-
 
 pub fn find_build_requirements(request: DependencyTreeRequest, dependency_tree: &DependencyTreeNode) -> Result<UniqueDependenciesList> {
     let project_manipulator: AnyProjectManipulator = match request {

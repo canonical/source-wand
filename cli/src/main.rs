@@ -49,20 +49,12 @@ enum Command {
     Apply(ApplyArgs),
 }
 
-<<<<<<< HEAD
-fn main() -> Result<()> {
-    match Cli::parse().command {
-        Command::Dependencies(args) => dependencies_command(&args),
-        Command::Init(args) => replicate_init_command(&args),
-        Command::Plan(args) => replicate_plan_command(&args),
-        Command::Apply(args) => replicate_apply_command(&args),
-    }
-}
-=======
 //fn main() -> Result<()> {
 //    match Cli::parse().command {
 //        Command::Dependencies(args) => dependencies_command(&args),
-//        Command::Replication(args) => replicate_command(&args),
+//        Command::Init(args) => replicate_init_command(&args),
+//        Command::Plan(args) => replicate_plan_command(&args),
+//        Command::Apply(args) => replicate_apply_command(&args),
 //    }
 //}
 
@@ -74,5 +66,5 @@ fn main() {
     let mut graph: Graph<DependencyTreeNodeGo, String> = Graph::new();
     parse_dependency(&url, &version, &project_root, &module_name, &mut graph); 
     graph.print();
+    //println!("{}", graph.to_dot());
 }
->>>>>>> 516fbe8 (Can create a Graph)

@@ -11,3 +11,5 @@ packages/
 to-complete/
 dependencies.yaml
 logs/
+log*
+graph*
