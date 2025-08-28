@@ -1,8 +1,10 @@
 use std::sync::Arc;
 
+use uuid::Uuid;
+
 use crate::plan::transformation::Transformation;
 
-pub type NodeId = usize;
+pub type NodeId = Uuid;
 
 #[derive(Clone)]
 pub struct TransformationNode {
@@ -10,5 +12,11 @@ pub struct TransformationNode {
     pub workdesk: String,
     pub transformation: Arc<dyn Transformation>,
     pub dependencies: Vec<NodeId>,
-    pub dependents: Vec<NodeId>,
+}
+
+impl TransformationNode {
+    pub fn new(workdesk: String, transformation: Arc<dyn Transformation>, dependencies: Vec<NodeId>) -> Self {
+        let id: NodeId = Uuid::new_v4();
+        TransformationNode { id, workdesk, transformation, dependencies }
+    }
 }
