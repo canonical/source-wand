@@ -3,7 +3,7 @@ use anyhow::Result;
 use crate::plan::context::Context;
 
 pub trait Transformation: Send + Sync + TransformationClone {
-    fn apply(&self, ctx: Context) -> Result<Context>;
+    fn apply(&self, ctx: Context) -> Result<Option<String>>;
     fn should_skip(&self, ctx: &Context) -> Option<String>;
     fn get_name(&self) -> String;
 }

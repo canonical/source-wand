@@ -53,13 +53,13 @@ impl SourcecraftInitialize {
 }
 
 impl Transformation for SourcecraftInitialize {
-    fn apply(&self, ctx: Context) -> Result<Context> {
+    fn apply(&self, ctx: Context) -> Result<Option<String>> {
         let sourcecraft_metadata: SourcecraftMetadata = SourcecraftMetadata::from_args(&self);
         write_yaml_file(
             &sourcecraft_metadata,
             format!("{}/sourcecraft.yaml", ctx.sh.project_root.to_str().unwrap()).as_str(),
         )?;
-        Ok(ctx)
+        Ok(None)
     }
 
     fn should_skip(&self, ctx: &Context) -> Option<String> {

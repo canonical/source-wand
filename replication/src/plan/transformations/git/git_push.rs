@@ -19,12 +19,12 @@ impl GitPush {
 }
 
 impl Transformation for GitPush {
-    fn apply(&self, ctx: Context) -> Result<Context> {
+    fn apply(&self, ctx: Context) -> Result<Option<String>> {
         ctx.sh.run_shell("git add .".to_string())?;
         ctx.sh.run_shell(format!("git commit -m '{}'", self.commit_text))?;
         ctx.sh.run_shell(format!("git push -u origin {}", self.reference))?;
 
-        Ok(ctx)
+        Ok(Some(format!("commit \"{}\"", self.commit_text)))
     }
 
     fn should_skip(&self, ctx: &Context) -> Option<String> {

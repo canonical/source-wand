@@ -27,16 +27,16 @@ impl InitializeProject {
 }
 
 impl Transformation for InitializeProject {
-    fn apply(&self, ctx: Context) -> Result<Context> {
+    fn apply(&self, ctx: Context) -> Result<Option<String>> {
         if self.git_init.reference_exists(&ctx) {
             self.git_init.apply(ctx.clone())?;
+            Ok(Some("fetched back from mirror".to_string()))
         }
         else {
             self.fetch_source.apply(ctx.clone())?;
             self.git_init.apply(ctx.clone())?;
+            Ok(Some("fetched from Go proxy".to_string()))
         }
-
-        Ok(ctx)
     }
 
     fn should_skip(&self, _: &Context) -> Option<String> {

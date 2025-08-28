@@ -86,21 +86,26 @@ pub fn execute_plan(nodes: Vec<Arc<TransformationNode>>) -> Result<()> {
                     );
                 }
                 else {
-                    let transformation_result: Result<Context> = node.transformation.apply(ctx);
-                    if let Err(e) = transformation_result {
-                        *error.lock().unwrap() = Err(e);
-                        return;
-                    }
-                    else {
-                        println!(
-                            "{:<106} context: {}",
-                            format!(
-                                "{} {}",
-                                "[execute]".to_string().green(),
-                                node.transformation.get_name().blue(),
-                            ),
-                            node.workdesk,
-                        );
+                    let transformation_result: Result<Option<String>> = node.transformation.apply(ctx);
+                    match transformation_result {
+                        Ok(message) => {
+                            let message: String = message.unwrap_or_default();
+
+                            println!(
+                                "{:<120} context: {}",
+                                format!(
+                                    "{} {} {}",
+                                    "[execute]".to_string().green(),
+                                    node.transformation.get_name().blue(),
+                                    message.italic(),
+                                ),
+                                node.workdesk,
+                            );
+                        },
+                        Err(e) => {
+                            *error.lock().unwrap() = Err(e);
+                            return;
+                        }
                     }
                 }
             } else {

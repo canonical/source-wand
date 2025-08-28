@@ -33,7 +33,7 @@ impl GitInit {
 }
 
 impl Transformation for GitInit {
-    fn apply(&self, ctx: Context) -> Result<Context> {
+    fn apply(&self, ctx: Context) -> Result<Option<String>> {
         if self.reference_exists(&ctx) {
             ctx.sh.run_shell(format!("git clone {} .", self.repository_url))?;
             ctx.sh.run_shell(format!("git checkout {}", self.reference))?;
@@ -50,7 +50,7 @@ impl Transformation for GitInit {
             ctx.sh.run_shell(format!("git config --local user.email {}", git_identity.email))?;
         }
 
-        Ok(ctx)
+        Ok(None)
     }
 
     fn should_skip(&self, _: &Context) -> Option<String> {
