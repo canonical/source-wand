@@ -10,5 +10,4 @@ pub struct TransformationNode {
     pub workdesk: String,
     pub transformation: Arc<dyn Transformation>,
     pub dependencies: Vec<NodeId>,
-    pub dependents: Vec<NodeId>,
 }

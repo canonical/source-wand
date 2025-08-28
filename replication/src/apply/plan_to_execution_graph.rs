@@ -55,7 +55,6 @@ impl ReplicationPlan {
                         )
                     ),
                     dependencies: vec![],
-                    dependents: vec![id + 1],
                 };
     
                 let push_code: TransformationNode = TransformationNode {
@@ -66,7 +65,6 @@ impl ReplicationPlan {
                         "Replicate source code".to_string(),
                     )),
                     dependencies: vec![id],
-                    dependents: vec![id + 2]
                 };
 
                 let initialize_sourcecraft: TransformationNode = TransformationNode {
@@ -81,7 +79,6 @@ impl ReplicationPlan {
                         package.is_library,
                     )),
                     dependencies: vec![id + 1],
-                    dependents: vec![id + 3]
                 };
 
                 let push_sourcecraft_metadata: TransformationNode = TransformationNode {
@@ -92,7 +89,6 @@ impl ReplicationPlan {
                         "Initialize sourcecraft".to_string(),
                     )),
                     dependencies: vec![id + 2],
-                    dependents: vec![]
                 };
 
                 execution_graph.push(Arc::new(initialize_project));
