@@ -8,8 +8,11 @@ use crate::{
     },
     plan::{
         environment::Environment,
+        execution_graph_builder::{
+            ExecutionGraphBuilder,
+            RcExecutionNodeBuilder
+        },
         transformation_node::{
-            NodeId,
             TransformationNode
         },
         transformations::{
@@ -26,9 +29,8 @@ use crate::{
 
 impl ReplicationPlan {
     pub fn to_execution_graph(&self) -> Vec<Arc<TransformationNode>> {
-        let mut execution_graph: Vec<Arc<TransformationNode>> = Vec::new();
+        let mut execution_graph_builder: ExecutionGraphBuilder = ExecutionGraphBuilder::new();
 
-        let mut id: NodeId = 0;
         for package in &self.packages {
             if let PackageOrigin::GoCache(origin) = &package.origin {
                 let PackageDestination::Git(destination) = &package.destination;
@@ -36,10 +38,9 @@ impl ReplicationPlan {
                 let environment: Environment = Environment::new(&origin.name, &origin.version);
                 let workdesk: String = format!("{} ({}-24.04/edge)", environment.name, environment.version_retrocompatible);
 
-                let initialize_project: TransformationNode = TransformationNode {
-                    id: id,
-                    workdesk: workdesk.clone(),
-                    transformation: Arc::new(
+                let initialize_project: RcExecutionNodeBuilder = execution_graph_builder.create_node(
+                    workdesk.clone(),
+                    Arc::new(
                         InitializeProject::new(
                             GitInit::new(
                                 destination.git.clone(),
@@ -53,53 +54,49 @@ impl ReplicationPlan {
                             ),
                             GolangFetchSource::new(origin.path.clone()),
                         )
-                    ),
-                    dependencies: vec![],
-                };
-    
-                let push_code: TransformationNode = TransformationNode {
-                    id: id + 1,
-                    workdesk: workdesk.clone(),
-                    transformation: Arc::new(GitPush::new(
-                        destination.reference.clone(),
-                        "Replicate source code".to_string(),
-                    )),
-                    dependencies: vec![id],
-                };
+                    )
+                );
 
-                let initialize_sourcecraft: TransformationNode = TransformationNode {
-                    id: id + 2,
-                    workdesk: workdesk.clone(),
-                    transformation: Arc::new(SourcecraftInitialize::new(
-                        environment.name.clone(),
-                        format!("{}-24.04", environment.version_retrocompatible.clone()),
-                        "ubuntu@24.04".to_string(),
-                        vec!["amd64".to_string()],
-                        package.dependencies.clone(),
-                        package.is_library,
-                    )),
-                    dependencies: vec![id + 1],
-                };
+                let push_code: RcExecutionNodeBuilder = execution_graph_builder.create_node(
+                    workdesk.clone(),
+                    Arc::new(
+                        GitPush::new(
+                            destination.reference.clone(),
+                            "Replicate source code".to_string(),
+                        )
+                    )
+                );
 
-                let push_sourcecraft_metadata: TransformationNode = TransformationNode {
-                    id: id + 3,
-                    workdesk: workdesk,
-                    transformation: Arc::new(GitPush::new(
-                        destination.reference.clone(),
-                        "Initialize sourcecraft".to_string(),
-                    )),
-                    dependencies: vec![id + 2],
-                };
+                let initialize_sourcecraft: RcExecutionNodeBuilder = execution_graph_builder.create_node(
+                    workdesk.clone(),
+                    Arc::new(
+                        SourcecraftInitialize::new(
+                            environment.name.clone(),
+                            format!("{}-24.04", environment.version_retrocompatible.clone()),
+                            "ubuntu@24.04".to_string(),
+                            vec!["amd64".to_string()],
+                            package.dependencies.clone(),
+                            package.is_library,
+                        )
+                    )
+                );
 
-                execution_graph.push(Arc::new(initialize_project));
-                execution_graph.push(Arc::new(push_code));
-                execution_graph.push(Arc::new(initialize_sourcecraft));
-                execution_graph.push(Arc::new(push_sourcecraft_metadata));
+                let push_sourcecraft_metadata: RcExecutionNodeBuilder = execution_graph_builder.create_node(
+                    workdesk.clone(),
+                    Arc::new(
+                        GitPush::new(
+                            destination.reference.clone(),
+                            "Initialize sourcecraft".to_string(),
+                        )
+                    )
+                );
 
-                id += 4;
+                push_code.borrow_mut().depends_on(&initialize_project);
+                initialize_sourcecraft.borrow_mut().depends_on(&push_code);
+                push_sourcecraft_metadata.borrow_mut().depends_on(&initialize_sourcecraft);
             }
         }
 
-        execution_graph
+        execution_graph_builder.build()
     }
 }

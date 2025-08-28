@@ -19,7 +19,7 @@ use uuid::Uuid;
 
 use source_wand_common::project_manipulator::local_project_manipulator::LocalProjectManipulator;
 
-use crate::plan::{context::Context, transformation_node::TransformationNode};
+use crate::plan::{context::Context, transformation_node::{NodeId, TransformationNode}};
 
 pub fn execute_plan(nodes: Vec<Arc<TransformationNode>>) -> Result<()> {
     let mut workdesk_contexts: HashMap<String, Context> = HashMap::new();
@@ -40,7 +40,7 @@ pub fn execute_plan(nodes: Vec<Arc<TransformationNode>>) -> Result<()> {
     }
 
     let context_map: Arc<Mutex<HashMap<String, Context>>> = Arc::new(Mutex::new(workdesk_contexts));
-    let completed: Arc<Mutex<HashSet<usize>>> = Arc::new(Mutex::new(HashSet::new()));
+    let completed: Arc<Mutex<HashSet<NodeId>>> = Arc::new(Mutex::new(HashSet::new()));
 
     let error: Arc<Mutex<Result<(), Error>>> = Arc::new(Mutex::new(Ok(())));
 
