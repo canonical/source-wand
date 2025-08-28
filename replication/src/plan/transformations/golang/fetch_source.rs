@@ -15,9 +15,9 @@ impl GolangFetchSource {
 }
 
 impl Transformation for GolangFetchSource {
-    fn apply(&self, ctx: Context) -> Result<Context> {
+    fn apply(&self, ctx: Context) -> Result<Option<String>> {
         ctx.sh.run_shell(format!("cp -r {}/* .", self.origin))?;
-        Ok(ctx)
+        Ok(None)
     }
 
     fn should_skip(&self, _: &Context) -> Option<String> {
