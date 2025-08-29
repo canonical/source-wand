@@ -1,15 +1,13 @@
-use std::{collections::{HashMap, HashSet}, env, fs, path::PathBuf, str::FromStr, string, sync::{Arc, Mutex}};
-
+use std::{collections::HashSet, fs, path::PathBuf, str::FromStr, sync::Arc};
 use anyhow::Result;
 use reqwest::blocking::get;
 use scraper::{Html, Selector};
 use source_wand_common::project_manipulator::{
-        self, local_project_manipulator::LocalProjectManipulator, project_manipulator::{AnyProjectManipulator, ProjectManipulator}
+        local_project_manipulator::LocalProjectManipulator, project_manipulator::ProjectManipulator
     };
 use serde::{Deserialize, Serialize, Deserializer};
-use serde_json::Value;
 use uuid::Uuid;
-use crate::{dependency_tree_generators::go_depenendency_tree_struct::{DependencyTreeNodeGo, GoProject, Graph}, dependency_tree_node::DependencyTreeNode};
+use crate::dependency_tree_generators::go_depenendency_tree_struct::{DependencyTreeNodeGo, GoProject, Graph};
 use rayon::prelude::*; // 1. Import Rayon's parallel iterator traits
 
 // This is the function you need to implement.
@@ -123,7 +121,7 @@ pub fn parse_dependency<'a>(
     version: &'a String,
     project_root: &'a PathBuf,
     module_name: &'a String,
-    graph: Arc<Mutex<Graph<DependencyTreeNodeGo, String>>>,
+    graph: Arc<Graph<DependencyTreeNodeGo>>,
 ) {
     ///////////////////////// PRINT ///////////////////////////
     println!("###############NEW-CALL####################");
@@ -136,75 +134,89 @@ pub fn parse_dependency<'a>(
     // TODO: Check if the package is in sourcecraft. If it is, just create the node
     // 1. Module Name -> Check the Database (See if there is a sourcecraft name)
     // 2. Sourcecraft Name (+ version)) -> API (See if there is a track at the version)
-
     //########## TODO #################
-    // STEP: Clone the repository & parse the Go.Mod
-    let path: PathBuf = PathBuf::from(format!(
-        "{}/{}",
-        project_root.to_string_lossy(),
-        Uuid::new_v4().to_string()
-    ));
-    let project_manipulator: LocalProjectManipulator = clone_repo(url, version, &path);
-    let _ = project_manipulator.run_shell("sed -i 's/^go 1\\..*/go 1.18.0/' go.mod".to_string());
-    let _ = project_manipulator.run_shell(format!("go mod init {}", &module_name));
-    let _ = project_manipulator.run_shell("go mod tidy".to_string());
-    let _go_mod: String = match project_manipulator.run_shell("go mod edit -json".to_string()) {
-        Ok(str) => str,
-        Err(e) => { //TODO: Deal with error better in future
-            e.to_string();
-            return
-        }, 
-    }; 
-    println!("Go.Mod String: {}", &_go_mod);
-    let _go_mod_parsed: Option<GoModFile> = match serde_json::from_str(&_go_mod) {
-        Ok(gm) => gm,
-        Err(e) => {
-            eprintln!("Failed to deserialize: {}", e);
-            None
+
+    match graph.nodes.entry(module_name.clone()) {
+        dashmap::mapref::entry::Entry::Occupied(_) => {
+            return;
         }
-    };
-    // STEP: Create A New Project //
-    // # Fields
-    let mut checkout = String::new();
-    let mut subdirectory = String::new();
-    match fetch_checkout(&module_name, &version, &url) {
-        Ok((checkout_vers, path)) => {
-            match checkout_vers {
-                Some(data) => checkout = data,
-                None => checkout = String::from(""),
-            }
-            match path {
-                Some(data2) => subdirectory = data2,
-                None => subdirectory = String::from(""),
-            }
-        } Err(_e) => {
+        dashmap::mapref::entry::Entry::Vacant(entry) => {
+            let path: PathBuf = PathBuf::from(format!(
+                "{}/{}",
+                project_root.to_string_lossy(),
+                Uuid::new_v4().to_string()
+            ));
+            let project_manipulator: LocalProjectManipulator = clone_repo(url, version, &path);
+            let _ = project_manipulator.run_shell("sed -i 's/^go 1\\..*/go 1.18.0/' go.mod".to_string());
+            let _ = project_manipulator.run_shell(format!("go mod init {}", &module_name));
+            let _ = project_manipulator.run_shell("go mod tidy".to_string());
+            let _go_mod: String = match project_manipulator.run_shell("go mod edit -json".to_string()) {
+                Ok(str) => str,
+                Err(e) => { //TODO: Deal with error better in future
+                    e.to_string();
+                    return
+                }, 
+            }; 
+            println!("Go.Mod String: {}", &_go_mod);
+            let _go_mod_parsed: Option<GoModFile> = match serde_json::from_str(&_go_mod) {
+                Ok(gm) => Some(gm),
+                Err(e) => {
+                    eprintln!("Failed to deserialize: {}", e);
+                    None
+                }
+            };
+            // STEP: Create A New Project //
+            // # Fields
+            let mut checkout = String::new();
+            let mut subdirectory = String::new();
+            match fetch_checkout(&module_name, &version, &url) {
+                Ok((checkout_vers, path)) => {
+                    match checkout_vers {
+                        Some(data) => checkout = data,
+                        None => checkout = String::from(""),
+                    }
+                    match path {
+                        Some(data2) => subdirectory = data2,
+                        None => subdirectory = String::from(""),
+                    }
+                } Err(_e) => {
 
+                }
+            }
+
+            let new_project: GoProject = GoProject::new(module_name.clone(), version.clone(), url.clone(), checkout.clone());
+            let new_node: DependencyTreeNodeGo = DependencyTreeNodeGo::new(new_project);
+            // Add key as Module-Version(Checkout)
+            entry.insert(new_node);
+            println!("@@@@@ Added New Node: {}-{}", module_name, checkout);
+
+            if let Some(go_mod_parsed) = _go_mod_parsed {
+                let parent: String = go_mod_parsed.module.path.clone();
+                let children_to_process: Vec<(String, String, String)> = go_mod_parsed.require.par_iter().filter_map(|dep| {
+                    let child = dep.path.clone();
+                    if !graph.does_key_exist(&child) {  // Rough check; entry in recursion will handle races
+                        Some((dep.path.clone(), dep.version.clone(), get_repository_url(&dep.path)))
+                    } else {
+                        None
+                    }
+                }).collect();
+
+                children_to_process.par_iter().for_each(|(child_path, child_version, child_url)| {
+                    let graph_clone = graph.clone();
+                    parse_dependency(child_url, child_version, project_root, child_path, graph_clone);
+                });
+
+                go_mod_parsed.require.par_iter().for_each(|dep| {
+                    let child = dep.path.clone();
+                    println!("## Parent: {} | Child: {}", &parent, &child);
+                    graph.edges.entry(parent.clone())
+                        .or_insert_with(HashSet::new)
+                        .insert(child.clone());
+                    println!("@@@@ dependency {} has dep {}", &parent, &child);
+                });
+            }
+            project_manipulator.cleanup();
         }
-    }
-
-    let new_project: GoProject = GoProject::new(module_name.clone(), checkout.clone(), url.clone(), checkout.clone());
-    let new_node: DependencyTreeNodeGo = DependencyTreeNodeGo::new(new_project);
-    // Add key as Module-Version(Checkout)
-    graph.lock().unwrap().add_node(module_name.clone(), new_node);
-    println!("@@@@@ Added New Node: {}-{}", module_name, checkout);
-
-    if let Some(go_mod_parsed) = _go_mod_parsed {
-        go_mod_parsed.require.par_iter().for_each(|dep| {
-            let parent: String = go_mod_parsed.module.path.clone();
-            let child: String = dep.path.clone();
-            println!("## Parent: {} | Child: {}", &parent, &child);
-            let needs_recursion = !graph.lock().unwrap().does_key_exist(&child);
-
-            if needs_recursion {
-                println!("Key Doesn't Exist. Need to create {}", &child);
-                let dep_url: String = get_repository_url(&dep.path);
-                let graph_clone = Arc::clone(&graph);
-                parse_dependency(&dep_url, &dep.version, &project_root, &dep.path, graph_clone);
-            }
-            graph.lock().unwrap().add_depends(&parent, &child);
-            println!("@@@@ dependency {} has dep {}", &parent, &child);
-        });
-    project_manipulator.cleanup();
     }
 }
 

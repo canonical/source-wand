@@ -1,5 +1,6 @@
-use std::collections::{HashMap, HashSet};
-use std::fmt::{self, Display};
+use std::collections::{HashSet};
+use std::fmt::{self};
+
 // ### DependencyTreeNodeGo ###
 use std::sync::{Arc,Mutex};
 use serde::{Deserialize, Serialize};
@@ -40,69 +41,53 @@ impl DependencyTreeNodeGo {
  * Key: Go Node Name
  * Value: Rc owners of DependencyTreeNodeGo
  */
-pub struct Graph<DependencyTreeNodeGo, String> {
-    pub nodes: HashMap<String, Arc<Mutex<DependencyTreeNodeGo>>>,
+use dashmap::DashMap;
+
+#[derive(Clone)]
+pub struct Graph<T> {
+    pub nodes: Arc<DashMap<String, T>>,
+    pub edges: Arc<DashMap<String, HashSet<String>>>,
 }
 
-impl Graph<DependencyTreeNodeGo, String> {
+impl<T> Graph<T> {
     pub fn new() -> Self {
-        Graph { nodes: HashMap::new()}
-    }
-
-    pub fn add_node(&mut self, key: String, data: DependencyTreeNodeGo) -> Arc<Mutex<DependencyTreeNodeGo>> {
-        let node_handle = Arc::new(Mutex::new(data));
-        self.nodes.insert(key, node_handle.clone());
-        node_handle
-    }
-
-    fn add_edge(&self, from: &Arc<Mutex<DependencyTreeNodeGo>>, to: &Arc<Mutex<DependencyTreeNodeGo>>) {
-        let mut from_node = from.lock().unwrap();
-        from_node.dependencies.push(to.clone())
-    }
-
-    /// Adds an edge (to_key) into (from_key)'s `dependencies` list
-    pub fn add_depends(&mut self, from_key: &String, to_key: &String) -> bool {
-        if let (Some(from_node), Some(to_node)) = 
-        (self.nodes.get(from_key), self.nodes.get(to_key)) {
-            self.add_edge(from_node, to_node);
-            true
-        } else {
-            false
+        Graph {
+            nodes: Arc::new(DashMap::new()),
+            edges: Arc::new(DashMap::new()),
         }
     }
 
-    pub fn does_key_exist(&mut self, key: &String) -> bool {
+    pub fn does_key_exist(&self, key: &str) -> bool {
         self.nodes.contains_key(key)
+    }
+
+    pub fn add_node(&self, key: String, node: T) {
+        self.nodes.insert(key, node);
+    }
+
+    pub fn add_depends(&self, parent: &str, child: &str) {
+        self.edges.entry(parent.to_string())
+            .or_insert_with(HashSet::new)
+            .insert(child.to_string());
     }
 
     pub fn print_dependencies(&self) {
         println!("Project Dependencies:");
 
-        // Create a reverse map from a node's memory address to its key.
-        let mut keys_by_address: HashMap<*const Mutex<DependencyTreeNodeGo>, &String> = HashMap::new();
-        for (key, node_handle) in &self.nodes {
-            keys_by_address.insert(Arc::as_ptr(node_handle), key);
-        }
-
-        // Get and sort keys for a consistent, ordered output.
-        let mut sorted_keys: Vec<&String> = self.nodes.keys().collect();
+        let mut sorted_keys: Vec<String> = self.edges.iter().map(|entry| entry.key().clone()).collect();
         sorted_keys.sort();
 
-        // Iterate and print each node's dependencies.
         for key in sorted_keys {
-            let node_handle = self.nodes.get(key).unwrap();
-            let node = node_handle.lock().unwrap();
-            
-            let dependency_keys: Vec<&String> = node.dependencies.iter()
-                .filter_map(|dep_handle| keys_by_address.get(&Arc::as_ptr(dep_handle)).copied())
-                .collect();
-            
-            println!("\"{}\": {:?}", key, dependency_keys);
+            if let Some(deps) = self.edges.get(&key) {
+                let mut dep_keys: Vec<&String> = deps.value().iter().collect();
+                dep_keys.sort();
+                println!("\"{}\": {:?}", key, dep_keys);
+            } else {
+                println!("\"{}\": []", key);
+            }
         }
     }
-
-
-
+}
 
 //    pub fn print_nodes(&self) {
 //        let mut keys_by_address: HashMap<*const DependencyTreeNodeGo, &String> = HashMap::new();
@@ -161,10 +146,7 @@ impl Graph<DependencyTreeNodeGo, String> {
 //        dot_string
 //    }
 
-
-}
-
-impl<DependencyTreeNodeGo: fmt::Debug, String: fmt::Debug> fmt::Debug for Graph<DependencyTreeNodeGo, String> {
+impl<DependencyTreeNodeGo: fmt::Debug> fmt::Debug for Graph<DependencyTreeNodeGo> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Graph").field("nodes", &self.nodes).finish()
     }

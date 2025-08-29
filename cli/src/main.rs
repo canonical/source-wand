@@ -1,17 +1,10 @@
-use std::{path::PathBuf, sync::{Arc, Mutex}};
+use std::{path::PathBuf, sync::Arc};
 
-use anyhow::Result;
 use clap::{Parser, Subcommand};
-use commands::{
-    dependencies::{
-        dependencies_command,
-        DependenciesArgs
-    }
-};
-use source_wand_dependency_analysis::dependency_tree_generators::{go_dependency_tree_generator_andrew::parse_dependency, go_depenendency_tree_struct::{DependencyTreeNodeGo, Graph}};
-use uuid::Uuid;
+use commands::dependencies::DependenciesArgs;
+use source_wand_dependency_analysis::dependency_tree_generators::{go_dependency_tree_generator_andrew::parse_dependency, go_depenendency_tree_struct::Graph};
 
-use crate::commands::replication::{replicate_command, ReplicationArgs};
+use crate::commands::replication::ReplicationArgs;
 
 mod commands;
 
@@ -40,12 +33,11 @@ enum Command {
 fn main() {
     let url: String = "https://github.com/canonical/chisel".to_string();
     let version: String = "v1.2.0".to_string();
-    let project_root: PathBuf = PathBuf::from("/home/andrew/source-wand-projects");
+    let project_root: PathBuf = PathBuf::from("/home/thinking-dragon/canonical/container-onboarding-initiative/analysis");
     let module_name: String = "github.com/canonical/chisel".to_string();
-    let graph = Arc::new(Mutex::new(Graph::new()));
-    let graph_clone = Arc::clone(&graph);
-    parse_dependency(&url, &version, &project_root, &module_name, graph_clone); 
-    graph.lock().unwrap().print_dependencies();
+    let graph = Arc::new(Graph::new());
+    parse_dependency(&url, &version, &project_root, &module_name, Arc::clone(&graph)); 
+    graph.print_dependencies();
     //println!("{:#?}", graph);
     //println!("{}", graph.to_dot());
 }
