@@ -10,6 +10,7 @@ use commands::{
 };
 use source_wand_dependency_analysis::dependency_tree_generators::{go_dependency_tree_generator_andrew::parse_dependency, go_depenendency_tree_struct::{DependencyTreeNodeGo, Graph}};
 use uuid::Uuid;
+use tokio::main;
 
 use crate::commands::replication::{replicate_command, ReplicationArgs};
 
@@ -37,14 +38,17 @@ enum Command {
 //    }
 //}
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let url: String = "https://github.com/canonical/chisel".to_string();
     let version: String = "v1.2.0".to_string();
     let project_root: PathBuf = PathBuf::from("/home/andrew/source-wand-projects");
     let module_name: String = "github.com/canonical/chisel".to_string();
     let graph = Arc::new(Mutex::new(Graph::new()));
     let graph_clone = Arc::clone(&graph);
-    parse_dependency(&url, &version, &project_root, &module_name, graph_clone); 
+    if let Err(e) = parse_dependency(url, version, project_root, module_name, graph_clone).await {
+        eprintln!("An error occured: {}", e);
+    }; 
     graph.lock().unwrap().print_dependencies();
     //println!("{:#?}", graph);
     //println!("{}", graph.to_dot());

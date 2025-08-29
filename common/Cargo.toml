@@ -5,6 +5,8 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.98"
+async-trait = "0.1.89"
 lxd = "0.1.9"
 serde = { version = "1.0.217", features = ["derive"] }
 serde_yaml = "0.9.34"
+tokio = { version = "1.45.1", features = ["full"] }
