@@ -6,6 +6,10 @@ use source_wand_common::{
     project_manipulator::project_manipulator::ProjectManipulator,
     utils::write_yaml_file::write_yaml_file
 };
+use source_wand_concurrent_executor::{
+    context::Context,
+    transformation::Transformation
+};
 
 use crate::{
     model::{
@@ -15,10 +19,6 @@ use crate::{
             sourcecraft_metadata::SourcecraftMetadata
         }
     },
-    plan::{
-        context::Context,
-        transformation::Transformation
-    }
 };
 
 #[derive(Debug, Clone)]

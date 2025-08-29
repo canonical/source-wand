@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc, sync::Arc};
 
-use crate::plan::{transformation::Transformation, transformation_node::TransformationNode};
+use crate::{transformation::Transformation, transformation_node::TransformationNode};
 
 pub type RcExecutionNodeBuilder = Rc<RefCell<ExecutionNodeBuilder>>;
 

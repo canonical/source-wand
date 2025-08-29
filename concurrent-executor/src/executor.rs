@@ -1,8 +1,5 @@
 use std::{
-    collections::{
-        HashMap,
-        HashSet,
-    },
+    collections::HashMap,
     fs::create_dir_all,
     path::PathBuf,
     sync::{
@@ -19,50 +16,11 @@ use uuid::Uuid;
 
 use source_wand_common::project_manipulator::local_project_manipulator::LocalProjectManipulator;
 
-use crate::plan::{
-    context::Context,
-    transformation_node::{
-        NodeId,
-        TransformationNode
-    }
+use crate::{
+    context::Context, execution_status_tracker::ExecutionProgressTracker, transformation_node::TransformationNode
 };
 
-struct ExecutionProgressTracker {
-    executing: HashSet<NodeId>,
-    completed: HashSet<NodeId>,
-}
-
-impl ExecutionProgressTracker {
-    pub fn new() -> Self {
-        ExecutionProgressTracker {
-            executing: HashSet::new(),
-            completed: HashSet::new(),
-        }
-    }
-
-    pub fn reserve(&mut self, node: NodeId) {
-        self.executing.insert(node);
-    }
-
-    pub fn complete(&mut self, node: NodeId) {
-        self.executing.remove(&node);
-        self.completed.insert(node);
-    }
-
-    pub fn is_available(&self, node: &NodeId) -> bool {
-        !self.executing.contains(node) && !self.completed.contains(node)
-    }
-
-    pub fn has_completed(&self, node: &NodeId) -> bool {
-        self.completed.contains(node)
-    }
-
-    pub fn count_completed(&self) -> usize {
-        self.completed.len()
-    }
-}
-
-pub fn execute_plan(nodes: Vec<Arc<TransformationNode>>) -> Result<()> {
+pub fn execute_graph(nodes: Vec<Arc<TransformationNode>>) -> Result<()> {
     let mut workdesk_contexts: HashMap<String, Context> = HashMap::new();
     for node in &nodes {
         if !workdesk_contexts.contains_key(&node.workdesk) {

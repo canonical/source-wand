@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use uuid::Uuid;
 
-use crate::plan::transformation::Transformation;
+use crate::transformation::Transformation;
 
 pub type NodeId = Uuid;
 

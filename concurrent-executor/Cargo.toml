@@ -1,0 +1,12 @@
+[package]
+name = "source-wand-concurrent-executor"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.99"
+colorize = "0.1.0"
+rayon = "1.11.0"
+uuid = { version = "1.18.0", features = ["v4"] }
+
+source-wand-common = { path = "../common" }

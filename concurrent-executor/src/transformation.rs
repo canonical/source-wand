@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use crate::plan::context::Context;
+use crate::context::Context;
 
 pub trait Transformation: Send + Sync + TransformationClone {
     fn apply(&self, ctx: Context) -> Result<Option<String>>;

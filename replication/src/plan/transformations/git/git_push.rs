@@ -1,7 +1,11 @@
 use anyhow::Result;
+
 use source_wand_common::project_manipulator::project_manipulator::ProjectManipulator;
 
-use crate::plan::{context::Context, transformation::Transformation};
+use source_wand_concurrent_executor::{
+    context::Context,
+    transformation::Transformation
+};
 
 #[derive(Debug, Clone)]
 pub struct GitPush {

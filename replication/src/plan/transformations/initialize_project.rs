@@ -1,14 +1,13 @@
 use anyhow::Result;
 
-use crate::{
-    plan::{
-        context::Context,
-        transformation::Transformation,
-        transformations::{
-            git::git_init::GitInit,
-            golang::fetch_source::GolangFetchSource
-        }
-    }
+use source_wand_concurrent_executor::{
+    context::Context,
+    transformation::Transformation,
+};
+
+use crate::plan::transformations::{
+    git::git_init::GitInit,
+    golang::fetch_source::GolangFetchSource,
 };
 
 #[derive(Debug, Clone)]

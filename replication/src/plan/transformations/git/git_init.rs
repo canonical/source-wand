@@ -1,7 +1,13 @@
 use anyhow::Result;
+
 use source_wand_common::project_manipulator::project_manipulator::ProjectManipulator;
 
-use crate::{model::replication_config::GitIdentity, plan::{context::Context, transformation::Transformation}};
+use source_wand_concurrent_executor::{
+    context::Context,
+    transformation::Transformation
+};
+
+use crate::model::replication_config::GitIdentity;
 
 #[derive(Debug, Clone)]
 pub struct GitInit {
