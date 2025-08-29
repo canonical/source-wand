@@ -1,4 +1,4 @@
-use std::{path::PathBuf, sync::{Arc, Mutex}};
+use std::path::PathBuf;
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
@@ -63,10 +63,8 @@ fn main() {
     let version: String = "v1.2.0".to_string();
     let project_root: PathBuf = PathBuf::from("/home/andrew/source-wand-projects");
     let module_name: String = "github.com/canonical/chisel".to_string();
-    let graph = Arc::new(Mutex::new(Graph::new()));
-    let graph_clone = Arc::clone(&graph);
-    parse_dependency(&url, &version, &project_root, &module_name, graph_clone); 
-    graph.lock().unwrap().print_dependencies();
-    //println!("{:#?}", graph);
+    let mut graph: Graph<DependencyTreeNodeGo, String> = Graph::new();
+    parse_dependency(&url, &version, &project_root, &module_name, &mut graph); 
+    graph.print();
     //println!("{}", graph.to_dot());
 }

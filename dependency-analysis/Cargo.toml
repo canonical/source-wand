@@ -19,3 +19,4 @@ anyhow = "1.0.98"
 tokio = { version = "1.45.1", features = ["full"] }
 futures = "0.3.31"
 rayon = "1.11.0"
+dashmap = { version = "6.1.0", features = ["rayon"] }
