@@ -1,6 +1,6 @@
 use std::{
-    collections::HashMap,
     fs::create_dir_all,
+    io,
     path::PathBuf,
     sync::{
         Arc,
@@ -10,6 +10,7 @@ use std::{
 };
 
 use colorize::AnsiColor;
+use dashmap::{mapref::one::RefMut, DashMap};
 use rayon::prelude::*;
 use anyhow::{anyhow, Error, Result};
 use uuid::Uuid;
@@ -21,24 +22,28 @@ use crate::{
 };
 
 pub fn execute_graph(nodes: Vec<Arc<TransformationNode>>) -> Result<()> {
-    let mut workdesk_contexts: HashMap<String, Context> = HashMap::new();
-    for node in &nodes {
-        if !workdesk_contexts.contains_key(&node.workdesk) {
-            let uuid: Uuid = Uuid::new_v4();
-            let source_directory: PathBuf = PathBuf::from(format!("./source-wand/{}", uuid));
+    let workdesk_contexts: DashMap<String, Context> = DashMap::new();
+    nodes.par_iter().map(
+        |node| {
+            if !workdesk_contexts.contains_key(&node.workdesk) {
+                let uuid: Uuid = Uuid::new_v4();
+                let source_directory: PathBuf = PathBuf::from(format!("./source-wand/{}", uuid));
 
-            create_dir_all(&source_directory)?;
+                create_dir_all(&source_directory)?;
 
-            let sh: LocalProjectManipulator = LocalProjectManipulator::new(
-                source_directory,
-                false,
-            );
+                let sh: LocalProjectManipulator = LocalProjectManipulator::new(
+                    source_directory,
+                    false,
+                );
 
-            workdesk_contexts.insert(node.workdesk.clone(), Context::new(sh));
+                workdesk_contexts.insert(node.workdesk.clone(), Context::new(sh));
+            }
+
+            Ok(())
         }
-    }
+    ).collect::<Result<(), io::Error>>()?;
 
-    let context_map: Arc<Mutex<HashMap<String, Context>>> = Arc::new(Mutex::new(workdesk_contexts));
+    let context_map: Arc<DashMap<String, Context>> = Arc::new(workdesk_contexts);
 
     let execution_progress_tracker: Arc<Mutex<ExecutionProgressTracker>> = Arc::new(Mutex::new(ExecutionProgressTracker::new()));
 
@@ -62,16 +67,15 @@ pub fn execute_graph(nodes: Vec<Arc<TransformationNode>>) -> Result<()> {
 fn handle_node_execution(
     node: &Arc<TransformationNode>,
     nodes: &Vec<Arc<TransformationNode>>,
-    context_map: &Arc<Mutex<HashMap<String, Context>>>,
+    context_map: &Arc<DashMap<String, Context>>,
     execution_progress_tracker: &Arc<Mutex<ExecutionProgressTracker>>,
     error: &Arc<Mutex<Result<(), Error>>>,
 ) {
-    let ctx: Option<Context> = {
-        let mut contexts: MutexGuard<'_, HashMap<String, Context>> = context_map.lock().unwrap();
-        contexts.get_mut(&node.workdesk).cloned()
-    };
+    let ctx: Option<RefMut<'_, String, Context>> = context_map.get_mut(&node.workdesk);
 
     if let Some(ctx) = ctx {
+        let ctx: Context = ctx.value().to_owned();
+
         if let Some(reason) = node.transformation.should_skip(&ctx) {
             println!(
                 "{:<120} context: {}",
@@ -118,7 +122,7 @@ fn handle_node_execution(
 
 fn schedule_ready_nodes(
     nodes: &Vec<Arc<TransformationNode>>,
-    context_map: &Arc<Mutex<HashMap<String, Context>>>,
+    context_map: &Arc<DashMap<String, Context>>,
     execution_progress_tracker: &Arc<Mutex<ExecutionProgressTracker>>,
     error: &Arc<Mutex<Result<(), Error>>>,
 ) {
