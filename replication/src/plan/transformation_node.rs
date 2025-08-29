@@ -12,11 +12,23 @@ pub struct TransformationNode {
     pub workdesk: String,
     pub transformation: Arc<dyn Transformation>,
     pub dependencies: Vec<NodeId>,
+    pub dependents: Vec<NodeId>,
 }
 
 impl TransformationNode {
-    pub fn new(workdesk: String, transformation: Arc<dyn Transformation>, dependencies: Vec<NodeId>) -> Self {
+    pub fn new(
+        workdesk: String,
+        transformation: Arc<dyn Transformation>,
+        dependencies: Vec<NodeId>,
+        dependents: Vec<NodeId>
+    ) -> Self {
         let id: NodeId = Uuid::new_v4();
-        TransformationNode { id, workdesk, transformation, dependencies }
+        TransformationNode {
+            id,
+            workdesk,
+            transformation,
+            dependencies,
+            dependents
+        }
     }
 }

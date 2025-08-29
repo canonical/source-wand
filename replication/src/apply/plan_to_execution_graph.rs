@@ -38,7 +38,7 @@ impl ReplicationPlan {
                 let environment: Environment = Environment::new(&origin.name, &origin.version);
                 let workdesk: String = format!("{} ({}-24.04/edge)", environment.name, environment.version_retrocompatible);
 
-                let initialize_project: RcExecutionNodeBuilder = execution_graph_builder.create_node(
+                let mut initialize_project: RcExecutionNodeBuilder = execution_graph_builder.create_node(
                     workdesk.clone(),
                     Arc::new(
                         InitializeProject::new(
@@ -57,7 +57,7 @@ impl ReplicationPlan {
                     )
                 );
 
-                let push_code: RcExecutionNodeBuilder = execution_graph_builder.create_node(
+                let mut push_code: RcExecutionNodeBuilder = execution_graph_builder.create_node(
                     workdesk.clone(),
                     Arc::new(
                         GitPush::new(
@@ -67,7 +67,7 @@ impl ReplicationPlan {
                     )
                 );
 
-                let initialize_sourcecraft: RcExecutionNodeBuilder = execution_graph_builder.create_node(
+                let mut initialize_sourcecraft: RcExecutionNodeBuilder = execution_graph_builder.create_node(
                     workdesk.clone(),
                     Arc::new(
                         SourcecraftInitialize::new(
@@ -91,9 +91,9 @@ impl ReplicationPlan {
                     )
                 );
 
-                push_code.borrow_mut().depends_on(&initialize_project);
-                initialize_sourcecraft.borrow_mut().depends_on(&push_code);
-                push_sourcecraft_metadata.borrow_mut().depends_on(&initialize_sourcecraft);
+                push_code.borrow_mut().depends_on(&mut initialize_project);
+                initialize_sourcecraft.borrow_mut().depends_on(&mut push_code);
+                push_sourcecraft_metadata.borrow_mut().depends_on(&mut initialize_sourcecraft);
             }
         }
 

@@ -19,7 +19,48 @@ use uuid::Uuid;
 
 use source_wand_common::project_manipulator::local_project_manipulator::LocalProjectManipulator;
 
-use crate::plan::{context::Context, transformation_node::{NodeId, TransformationNode}};
+use crate::plan::{
+    context::Context,
+    transformation_node::{
+        NodeId,
+        TransformationNode
+    }
+};
+
+struct ExecutionProgressTracker {
+    executing: HashSet<NodeId>,
+    completed: HashSet<NodeId>,
+}
+
+impl ExecutionProgressTracker {
+    pub fn new() -> Self {
+        ExecutionProgressTracker {
+            executing: HashSet::new(),
+            completed: HashSet::new(),
+        }
+    }
+
+    pub fn reserve(&mut self, node: NodeId) {
+        self.executing.insert(node);
+    }
+
+    pub fn complete(&mut self, node: NodeId) {
+        self.executing.remove(&node);
+        self.completed.insert(node);
+    }
+
+    pub fn is_available(&self, node: &NodeId) -> bool {
+        !self.executing.contains(node) && !self.completed.contains(node)
+    }
+
+    pub fn has_completed(&self, node: &NodeId) -> bool {
+        self.completed.contains(node)
+    }
+
+    pub fn count_completed(&self) -> usize {
+        self.completed.len()
+    }
+}
 
 pub fn execute_plan(nodes: Vec<Arc<TransformationNode>>) -> Result<()> {
     let mut workdesk_contexts: HashMap<String, Context> = HashMap::new();
@@ -40,91 +81,114 @@ pub fn execute_plan(nodes: Vec<Arc<TransformationNode>>) -> Result<()> {
     }
 
     let context_map: Arc<Mutex<HashMap<String, Context>>> = Arc::new(Mutex::new(workdesk_contexts));
-    let completed: Arc<Mutex<HashSet<NodeId>>> = Arc::new(Mutex::new(HashSet::new()));
+
+    let execution_progress_tracker: Arc<Mutex<ExecutionProgressTracker>> = Arc::new(Mutex::new(ExecutionProgressTracker::new()));
 
     let error: Arc<Mutex<Result<(), Error>>> = Arc::new(Mutex::new(Ok(())));
 
-    while completed.lock().unwrap().len() < nodes.len() {
-        let ready_nodes: Vec<Arc<TransformationNode>> = nodes
-            .iter()
-            .filter(
-                |node|
-                    !completed.lock().unwrap().contains(&node.id) &&
-                    node.dependencies
-                        .iter()
-                        .all(
-                            |dependency|
-                            completed
-                                .lock()
-                                .unwrap()
-                                .contains(dependency)
-                        )
-            )
-            .map(|node| node.clone())
-            .collect();
+    while execution_progress_tracker.lock().unwrap().count_completed() < nodes.len() {
+        schedule_ready_nodes(&nodes, &context_map, &execution_progress_tracker, &error);
 
-        ready_nodes
-            .par_iter()
-            .for_each(
-                |node| {
-                    let ctx: Option<Context> = {
-                        let mut contexts: MutexGuard<'_, HashMap<String, Context>> = context_map.lock().unwrap();
-                        contexts.get_mut(&node.workdesk).cloned()
-                    };
-
-                    if let Some(ctx) = ctx {
-                        if let Some(reason) = node.transformation.should_skip(&ctx) {
-                            println!(
-                                "{:<120} context: {}",
-                                format!(
-                                    "{} {} {}",
-                                    "[skip]".to_string().yellow(),
-                                    node.transformation.get_name().blue(),
-                                    reason.italic(),
-                                ),
-                                node.workdesk,
-                            );
-                        }
-                        else {
-                            let transformation_result: Result<Option<String>> = node.transformation.apply(ctx);
-                            match transformation_result {
-                                Ok(message) => {
-                                    let message: String = message.unwrap_or_default();
-
-                                    println!(
-                                        "{:<120} context: {}",
-                                        format!(
-                                            "{} {} {}",
-                                            "[execute]".to_string().green(),
-                                            node.transformation.get_name().blue(),
-                                            message.italic(),
-                                        ),
-                                        node.workdesk,
-                                    );
-                                },
-                                Err(e) => {
-                                    *error.lock().unwrap() = Err(e);
-                                    return;
-                                }
-                            }
-                        }
-                    } else {
-                        *error.lock().unwrap() = Err(anyhow::anyhow!("Missing context for workdesk {}", node.workdesk));
-                        return;
-                    }
-
-                    completed.lock().unwrap().insert(node.id);
-                }
-            );
-        
         if error.lock().unwrap().is_err() {
             break;
         }
     }
 
-    let error: MutexGuard<'_, std::result::Result<(), anyhow::Error>> = error.lock().unwrap();
+    let error: MutexGuard<'_, Result<(), anyhow::Error>> = error.lock().unwrap();
     match &*error {
         Ok(()) => Ok(()),
         Err(e) => Err(anyhow!(e.to_string())),
     }
+}
+
+fn handle_node_execution(
+    node: &Arc<TransformationNode>,
+    nodes: &Vec<Arc<TransformationNode>>,
+    context_map: &Arc<Mutex<HashMap<String, Context>>>,
+    execution_progress_tracker: &Arc<Mutex<ExecutionProgressTracker>>,
+    error: &Arc<Mutex<Result<(), Error>>>,
+) {
+    let ctx: Option<Context> = {
+        let mut contexts: MutexGuard<'_, HashMap<String, Context>> = context_map.lock().unwrap();
+        contexts.get_mut(&node.workdesk).cloned()
+    };
+
+    if let Some(ctx) = ctx {
+        if let Some(reason) = node.transformation.should_skip(&ctx) {
+            println!(
+                "{:<120} context: {}",
+                format!(
+                    "{} {} {}",
+                    "[skip]".to_string().yellow(),
+                    node.transformation.get_name().blue(),
+                    reason.italic(),
+                ),
+                node.workdesk,
+            );
+        }
+        else {
+            let transformation_result: Result<Option<String>> = node.transformation.apply(ctx);
+            match transformation_result {
+                Ok(message) => {
+                    let message: String = message.unwrap_or_default();
+
+                    println!(
+                        "{:<120} context: {}",
+                        format!(
+                            "{} {} {}",
+                            "[execute]".to_string().green(),
+                            node.transformation.get_name().blue(),
+                            message.italic(),
+                        ),
+                        node.workdesk,
+                    );
+                },
+                Err(e) => {
+                    *error.lock().unwrap() = Err(e);
+                    return;
+                }
+            }
+        }
+    } else {
+        *error.lock().unwrap() = Err(anyhow::anyhow!("Missing context for workdesk {}", node.workdesk));
+        return;
+    }
+
+    execution_progress_tracker.lock().unwrap().complete(node.id);
+    schedule_ready_nodes(nodes, context_map, execution_progress_tracker, error);
+}
+
+fn schedule_ready_nodes(
+    nodes: &Vec<Arc<TransformationNode>>,
+    context_map: &Arc<Mutex<HashMap<String, Context>>>,
+    execution_progress_tracker: &Arc<Mutex<ExecutionProgressTracker>>,
+    error: &Arc<Mutex<Result<(), Error>>>,
+) {
+    let ready_nodes: Vec<Arc<TransformationNode>> = nodes
+        .iter()
+        .filter(
+            |node| {
+                if execution_progress_tracker.lock().unwrap().is_available(&node.id) &&
+                    node.dependencies
+                        .iter()
+                        .all(|dependency| execution_progress_tracker.lock().unwrap().has_completed(&dependency))
+                {
+                    execution_progress_tracker.lock().unwrap().reserve(node.id);
+                    true
+                }
+                else {
+                    false
+                }
+            }
+        )
+        .map(|node| node.clone())
+        .collect();
+
+    ready_nodes
+        .par_iter()
+        .for_each(
+            |node| {
+                handle_node_execution(node, &nodes, &context_map, &execution_progress_tracker, &error);
+            }
+        );
 }
