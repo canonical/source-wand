@@ -65,6 +65,7 @@ fn main() {
     let module_name: String = "github.com/canonical/chisel".to_string();
     let mut graph: Graph<DependencyTreeNodeGo, String> = Graph::new();
     parse_dependency(&url, &version, &project_root, &module_name, &mut graph); 
-    graph.print();
+    graph.print_dependencies();
+    //println!("{:#?}", graph);
     //println!("{}", graph.to_dot());
 }
