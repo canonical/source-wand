@@ -1,31 +1,31 @@
-use std::collections::HashSet;
+use dashmap::DashSet;
 
 use crate::transformation_node::NodeId;
 
 pub struct ExecutionProgressTracker {
-    executing: HashSet<NodeId>,
-    completed: HashSet<NodeId>,
+    executing: DashSet<NodeId>,
+    completed: DashSet<NodeId>,
 }
 
 impl ExecutionProgressTracker {
     pub fn new() -> Self {
         ExecutionProgressTracker {
-            executing: HashSet::new(),
-            completed: HashSet::new(),
+            executing: DashSet::new(),
+            completed: DashSet::new(),
         }
     }
 
-    pub fn reserve(&mut self, node: NodeId) {
+    pub fn reserve(&self, node: NodeId) {
         self.executing.insert(node);
     }
 
-    pub fn complete(&mut self, node: NodeId) {
+    pub fn complete(&self, node: NodeId) {
         self.executing.remove(&node);
         self.completed.insert(node);
     }
 
     pub fn is_available(&self, node: &NodeId) -> bool {
-        !self.executing.contains(node) && !self.completed.contains(node)
+        self.executing.get(node).is_none() && self.completed.get(node).is_none()
     }
 
     pub fn has_completed(&self, node: &NodeId) -> bool {
