@@ -1,4 +1,4 @@
-use std::{collections::{HashMap, HashSet}, env, fs, path::PathBuf, str::FromStr, string};
+use std::{collections::{HashMap, HashSet}, env, fs, path::PathBuf, str::FromStr, string, sync::{Arc, Mutex}};
 
 use anyhow::Result;
 use reqwest::blocking::get;
@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize, Deserializer};
 use serde_json::Value;
 use uuid::Uuid;
 use crate::{dependency_tree_generators::go_depenendency_tree_struct::{DependencyTreeNodeGo, GoProject, Graph}, dependency_tree_node::DependencyTreeNode};
+use rayon::prelude::*; // 1. Import Rayon's parallel iterator traits
 
 // This is the function you need to implement.
 pub fn deserialize_require<'de, D>(deserializer: D) -> Result<Vec<GoModNode>, D::Error>
@@ -122,7 +123,7 @@ pub fn parse_dependency<'a>(
     version: &'a String,
     project_root: &'a PathBuf,
     module_name: &'a String,
-    graph: &'a mut Graph<DependencyTreeNodeGo, String>,
+    graph: Arc<Mutex<Graph<DependencyTreeNodeGo, String>>>,
 ) {
     ///////////////////////// PRINT ///////////////////////////
     println!("###############NEW-CALL####################");
@@ -184,34 +185,27 @@ pub fn parse_dependency<'a>(
     let new_project: GoProject = GoProject::new(module_name.clone(), checkout.clone(), url.clone(), checkout.clone());
     let new_node: DependencyTreeNodeGo = DependencyTreeNodeGo::new(new_project);
     // Add key as Module-Version(Checkout)
-    graph.add_node(module_name.clone(), new_node);
+    graph.lock().unwrap().add_node(module_name.clone(), new_node);
     println!("@@@@@ Added New Node: {}-{}", module_name, checkout);
 
-    if _go_mod_parsed.is_some() {
-        println!("^^Go Mod Parsed Exists (Doesn't Fail)");
-        let go_mod_parsed: GoModFile = _go_mod_parsed.unwrap();
-        for dep in &go_mod_parsed.require {
+    if let Some(go_mod_parsed) = _go_mod_parsed {
+        go_mod_parsed.require.par_iter().for_each(|dep| {
             let parent: String = go_mod_parsed.module.path.clone();
             let child: String = dep.path.clone();
-
-
-
             println!("## Parent: {} | Child: {}", &parent, &child);
+            let needs_recursion = !graph.lock().unwrap().does_key_exist(&child);
 
-
-
-            if graph.does_key_exist(&child) {
-                println!("Found the key");
-            } else {
+            if needs_recursion {
                 println!("Key Doesn't Exist. Need to create {}", &child);
                 let dep_url: String = get_repository_url(&dep.path);
-                parse_dependency(&dep_url, &dep.version, &project_root, &dep.path, graph);
+                let graph_clone = Arc::clone(&graph);
+                parse_dependency(&dep_url, &dep.version, &project_root, &dep.path, graph_clone);
             }
-            graph.add_depends(&parent, &child);
+            graph.lock().unwrap().add_depends(&parent, &child);
             println!("@@@@ dependency {} has dep {}", &parent, &child);
-        }
-    }
+        });
     project_manipulator.cleanup();
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
