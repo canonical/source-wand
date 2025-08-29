@@ -49,13 +49,7 @@ pub fn execute_graph(nodes: Vec<Arc<TransformationNode>>) -> Result<()> {
 
     let error: Arc<Mutex<Result<(), Error>>> = Arc::new(Mutex::new(Ok(())));
 
-    while execution_progress_tracker.lock().unwrap().count_completed() < nodes.len() {
-        schedule_ready_nodes(&nodes, &context_map, &execution_progress_tracker, &error);
-
-        if error.lock().unwrap().is_err() {
-            break;
-        }
-    }
+    schedule_ready_nodes(&nodes, &context_map, &execution_progress_tracker, &error);
 
     let error: MutexGuard<'_, Result<(), anyhow::Error>> = error.lock().unwrap();
     match &*error {
