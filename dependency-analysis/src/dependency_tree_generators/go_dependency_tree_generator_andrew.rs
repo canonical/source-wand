@@ -193,7 +193,13 @@ pub fn parse_dependency<'a>(
         for dep in &go_mod_parsed.require {
             let parent: String = go_mod_parsed.module.path.clone();
             let child: String = dep.path.clone();
+
+
+
             println!("## Parent: {} | Child: {}", &parent, &child);
+
+
+
             if graph.does_key_exist(&child) {
                 println!("Found the key");
             } else {
@@ -202,7 +208,6 @@ pub fn parse_dependency<'a>(
                 parse_dependency(&dep_url, &dep.version, &project_root, &dep.path, graph);
             }
             graph.add_depends(&parent, &child);
-            graph.add_rdepends(&child, &parent);
             println!("@@@@ dependency {} has dep {}", &parent, &child);
         }
     }
