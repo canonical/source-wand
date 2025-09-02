@@ -1,61 +1,82 @@
 use std::{collections::HashSet, fs, path::PathBuf, str::FromStr, sync::Arc};
 use anyhow::Result;
-use reqwest::blocking::get;
+use reqwest::blocking::{get, Response};
 use scraper::{Html, Selector};
-use source_wand_common::project_manipulator::{
+use source_wand_common::{project::Project, project_manipulator::{
         local_project_manipulator::LocalProjectManipulator, project_manipulator::ProjectManipulator
-    };
+    }};
 use serde::{Deserialize, Serialize, Deserializer};
 use uuid::Uuid;
-use crate::dependency_tree_generators::go_depenendency_tree_struct::{DependencyTreeNodeGo, GoProject, Graph};
+use crate::dependency_tree_generators::go_depenendency_tree_struct::{DependencyTreeNodeGo, Graph};
 use rayon::prelude::*; // 1. Import Rayon's parallel iterator traits
 
-// This is the function you need to implement.
-pub fn deserialize_require<'de, D>(deserializer: D) -> Result<Vec<GoModNode>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    // Check if the incoming value is `null` or a `None`
-    let value: Option<Vec<GoModNode>> = Option::deserialize(deserializer)?;
-    
-    // If the value is `Some`, unwrap it. Otherwise, return an empty vector.
-    Ok(value.unwrap_or_else(|| Vec::new()))
-}
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct GoModFile {
-    #[serde(rename = "Module")]
-    pub module: GoModModule,
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+#[allow(dead_code)]
+struct GoMod {
+    pub module: Module,
     #[serde(rename = "Go")]
-    pub go_version: String,
-    #[serde(rename = "Require")]
-    #[serde(deserialize_with = "deserialize_require")]
-    pub require: Vec<GoModNode>,
-    #[serde(rename = "Exclude")]
-    pub exclude: Option<String>,
-    #[serde(rename = "Replace")]
-    pub replace: Option<String>,
-    #[serde(rename = "Retract")]
-    pub retract: Option<String>,
-    #[serde(rename = "Tool")]
+    pub go_version: Option<String>,
+    pub require: Option<Vec<Require>>,
+    pub exclude: Option<Vec<Exclude>>,
+    pub replace: Option<Vec<Replace>>,
+    pub retract: Option<Vec<Retract>>,
     pub tool: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct GoModNode {
-    #[serde(rename = "Path")]
-    pub path: String,
-    #[serde(rename = "Version")]
-    pub version: String,
-    #[serde(rename = "Indirect")]
-    pub indirect: Option<bool>,
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+struct Module {
+    path: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct GoModModule {
-    #[serde(rename = "Path")]
-    pub path: String
+
+// Represents an object in the "Require" array
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+#[allow(dead_code)]
+struct Require {
+    path: String,
+    version: String,
+    indirect: Option<bool>,
+}
+
+// Represents an object in the "Exclude" array
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+#[allow(dead_code)]
+struct Exclude {
+    path: String,
+    version: String,
+}
+
+// Represents an object in the "Replace" array
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+#[allow(dead_code)]
+struct Replace {
+    old: ModuleVersion,
+    new: ModuleVersion,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+#[allow(dead_code)]
+struct Retract {
+    low: String,
+    high: String,
+    rationale: Option<String>,
+}
+
+// Represents the "Old" and "New" objects within a "Replace" object
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+#[allow(dead_code)]
+struct ModuleVersion {
+    path: String,
+    version: Option<String>,
 }
 
 fn get_version(version_string: &str) -> &str {
@@ -68,54 +89,6 @@ fn get_version(version_string: &str) -> &str {
     }
 }
 
-/**
- * first dependency
- * 1. Create a graph (empty)
- * 2. Start with the URL, Version (For the top-level)
- * 3. Feed to the parse_dependency (starting) -> have it return the graph
- * 
- */
-//pub fn generate_go_dependency_tree_andrew(url: &String, version: &String, project_root: &PathBuf) -> Result<Graph<DependencyTreeNodeGo, String>> {
-//    let mut graph: Graph<DependencyTreeNodeGo, String> = Graph::new();
-//    let project_manipulator: LocalProjectManipulator = clone_repo(url, version, project_root);
-//    let _go_mod: String = match project_manipulator.run_shell("go mod edit -json".to_string()) {
-//        Ok(str) => str,
-//        Err(e) => e.to_string(), // Deal with error better in future
-//    }; //TODO: #now Error handling
-//    let _go_mod_parsed: Option<GoModFile> = match serde_json::from_str(&_go_mod) { //TODO: #now Error handling
-//        Ok(gm) => gm,
-//        Err(e) => {
-//            eprintln!("Failed to deserialize: {}", e);
-//            None
-//        }
-//    };
-//    let checkout: String = version.clone();
-//
-//    let new_project: GoProject = GoProject::new("github.com/canonical/chisel".to_string(), url.clone(), checkout);
-//    let new_node: DependencyTreeNodeGo = DependencyTreeNodeGo::new(new_project);
-//    graph.add_node("github.com/canonical/chisel".to_string().clone(), new_node);
-//    if _go_mod_parsed.is_some() {
-//        let go_mod_parsed: GoModFile = _go_mod_parsed.unwrap();
-//        for dep in &go_mod_parsed.require { // Change into a map
-//            let parent: String = go_mod_parsed.module.path.clone(); // The key doesn't include version
-//            let child: String = dep.path.clone();
-//            if graph.does_key_exist(&parent) {
-//                println!("Found the key");
-//            } else {
-//                // Create The Dependency
-//                parse_dependency(&dep.path, &dep.version, &project_root, &dep.path, &mut graph);
-//            }
-//            graph.add_depends(&parent, &child);
-//        }
-//    }
-//    Ok(graph)
-//}
-
-/**
- * 
- * 
- * 
- */
 pub fn parse_dependency<'a>(
     url: &'a String,
     version: &'a String,
@@ -146,74 +119,76 @@ pub fn parse_dependency<'a>(
                 project_root.to_string_lossy(),
                 Uuid::new_v4().to_string()
             ));
-            let project_manipulator: LocalProjectManipulator = clone_repo(url, version, &path);
-            let _ = project_manipulator.run_shell("sed -i 's/^go 1\\..*/go 1.18.0/' go.mod".to_string());
-            let _ = project_manipulator.run_shell(format!("go mod init {}", &module_name));
-            let _ = project_manipulator.run_shell("go mod tidy".to_string());
-            let _go_mod: String = match project_manipulator.run_shell("go mod edit -json".to_string()) {
-                Ok(str) => str,
-                Err(e) => { //TODO: Deal with error better in future
-                    e.to_string();
-                    return
-                }, 
-            }; 
-            println!("Go.Mod String: {}", &_go_mod);
-            let _go_mod_parsed: Option<GoModFile> = match serde_json::from_str(&_go_mod) {
-                Ok(gm) => Some(gm),
-                Err(e) => {
-                    eprintln!("Failed to deserialize: {}", e);
-                    None
-                }
-            };
-            // STEP: Create A New Project //
-            // # Fields
-            let mut checkout = String::new();
-            let mut subdirectory = String::new();
+            let mut checkout: Option<String> = None;
+            let mut subdirectory:Option<String> = None;
             match fetch_checkout(&module_name, &version, &url) {
                 Ok((checkout_vers, path)) => {
                     match checkout_vers {
-                        Some(data) => checkout = data,
-                        None => checkout = String::from(""),
+                        Some(data) => checkout = Some(data),
+                        None => checkout = None
                     }
                     match path {
-                        Some(data2) => subdirectory = data2,
-                        None => subdirectory = String::from(""),
+                        Some(data2) => subdirectory = Some(data2),
+                        None => subdirectory = None
                     }
                 } Err(_e) => {
 
                 }
             }
+            let license: String = find_license(&module_name).unwrap_or("".to_string());
+            
+            let project_manipulator: LocalProjectManipulator = clone_repo(url, &checkout, &path);
+            let _ = project_manipulator.run_shell(format!("go mod init {}", &module_name));
+            let _ = project_manipulator.run_shell("sed -i 's/^go 1\\..*/go 1.18.0/' go.mod".to_string());
+            let _ = project_manipulator.run_shell("go mod tidy".to_string());
+            let _go_mod: String = match project_manipulator.run_shell("go mod edit -json".to_string()) {
+                Ok(str) => str,
+                Err(e) => { //TODO: Deal with error better in future
+                    println!("{}", e.to_string());
+                    return
+                }, 
+            }; 
+            //println!("Go.Mod String: {}", &_go_mod);
+            let _go_mod_parsed: Option<GoMod> = match serde_json::from_str(&_go_mod) {
+                Ok(gm) => gm,
+                Err(e) => {
+                    println!("ERROR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                    println!("{}", &module_name);
+                    eprintln!("Failed to deserialize: {}", e);
+                    None
+                }
+            };
+            // STEP: Create A New Project //
 
-            let new_project: GoProject = GoProject::new(module_name.clone(), version.clone(), url.clone(), checkout.clone());
+            let new_project: Project = Project::new(module_name.clone(), version.clone(), license, url.clone(), subdirectory.clone(), checkout.clone());
             let new_node: DependencyTreeNodeGo = DependencyTreeNodeGo::new(new_project);
-            // Add key as Module-Version(Checkout)
             entry.insert(new_node);
-            println!("@@@@@ Added New Node: {}-{}", module_name, checkout);
+            println!("@@@@@ Added New Node: {}", module_name);
 
             if let Some(go_mod_parsed) = _go_mod_parsed {
                 let parent: String = go_mod_parsed.module.path.clone();
-                let children_to_process: Vec<(String, String, String)> = go_mod_parsed.require.par_iter().filter_map(|dep| {
-                    let child = dep.path.clone();
-                    if !graph.does_key_exist(&child) {  // Rough check; entry in recursion will handle races
-                        Some((dep.path.clone(), dep.version.clone(), get_repository_url(&dep.path)))
-                    } else {
-                        None
-                    }
-                }).collect();
-
-                children_to_process.par_iter().for_each(|(child_path, child_version, child_url)| {
-                    let graph_clone = graph.clone();
-                    parse_dependency(child_url, child_version, project_root, child_path, graph_clone);
-                });
-
-                go_mod_parsed.require.par_iter().for_each(|dep| {
-                    let child = dep.path.clone();
-                    println!("## Parent: {} | Child: {}", &parent, &child);
-                    graph.edges.entry(parent.clone())
-                        .or_insert_with(HashSet::new)
-                        .insert(child.clone());
-                    println!("@@@@ dependency {} has dep {}", &parent, &child);
-                });
+                if let Some(requires) = go_mod_parsed.require {
+                    let children_to_process: Vec<(String, String, String)> = requires.par_iter().filter_map(|dep| {
+                        let child = dep.path.clone();
+                        if !graph.does_key_exist(&child) {  // Rough check; entry in recursion will handle races
+                            Some((dep.path.clone(), dep.version.clone(), get_repository_url(&dep.path)))
+                        } else {
+                            None
+                        }
+                    }).collect();
+                    children_to_process.par_iter().for_each(|(child_path, child_version, child_url)| {
+                        let graph_clone = graph.clone();
+                        parse_dependency(child_url, child_version, project_root, child_path, graph_clone);
+                    });
+                    requires.par_iter().for_each(|dep| {
+                        let child = dep.path.clone();
+                        println!("## Parent: {} | Child: {}", &parent, &child);
+                        graph.edges.entry(parent.clone())
+                            .or_insert_with(HashSet::new)
+                            .insert(child.clone());
+                        println!("@@@@ dependency {} has dep {}", &parent, &child);
+                    });
+                }
             }
             project_manipulator.cleanup();
         }
@@ -274,7 +249,7 @@ fn get_repository_url_pkg_go_dev(module_path: &str) -> Option<String> {
 
 /// Clone the repository at the URL, Version, and Project Root (The path to clone to)
 /// Return the manipulator that's at the root of the repository
-fn clone_repo(url: &String, version: &String, project_root: &PathBuf) -> LocalProjectManipulator {
+fn clone_repo(url: &String, version: &Option<String>, project_root: &PathBuf) -> LocalProjectManipulator {
     let mut repo_root: PathBuf = project_root.clone();
     repo_root.push(Uuid::new_v4().to_string());
     let result = fs::create_dir_all(&repo_root);
@@ -290,10 +265,12 @@ fn clone_repo(url: &String, version: &String, project_root: &PathBuf) -> LocalPr
         Err(e) => eprintln!("Error: {}", e),
     }
     // Get the correct checkout 
-    let v = get_version(&version);
-    match manipulator.run_shell(format!("git checkout {}", v)) {
-        Ok(str) => println!("Checkout: {}", str),
-        Err(e) => eprintln!("Error: {}", e),
+    if let Some(ver) = &version {
+        let v = get_version(&ver);
+        match manipulator.run_shell(format!("git checkout {}", v)) {
+            Ok(str) => println!("Checkout: {}", str),
+            Err(e) => eprintln!("Error: {}", e),
+        }
     }
     return manipulator;
 }
@@ -343,63 +320,34 @@ fn fetch_checkout(name: &String, version: &String, repository: &String) -> Resul
     Ok((checkout, path))
 }
 
-//fn resolve_checkout(version: &String, repository: &String) -> Option<String> {
-//    let path = PathBuf::from_str("/");
-//    let project_manipulator: LocalProjectManipulator = LocalProjectManipulator::new(path, true);
-//    let tags_raw: String = project_manipulator.run_shell(format!("git ls-remote --tags {}", repository))?;
-//    let tags: Vec<&str> = tags_raw.lines()
-//        .into_iter()
-//        .filter_map(|tag| tag.split("\t").last())
-//        .collect();
-//
-//    let branches_raw: String = project_manipulator.run_shell(format!("git ls-remote --heads {}", repository))?;
-//    let branches: Vec<&str> = branches_raw.lines()
-//        .filter_map(|branch| branch.split("\t").last())
-//        .collect();
-//    let version_tag: &str = version.split('+').next().unwrap_or(&version);
-//
-//    let checkout: Option<String> =
-//        if let Some(tag) = tags.iter().find(|tag| tag.contains(version_tag)) {
-//            Some(tag.to_string())
-//        }
-//        else if let Some(branch) = branches.iter().find(|branch| branch.contains(version_tag)) {
-//            Some(branch.to_string())
-//        }
-//        else {
-//            None
-//        };
-//    checkout
-//}
+fn find_license(module_path: &str) -> Option<String> {
+    let url: String = format!("https://pkg.go.dev/{}?go-get=1", module_path);
 
+    let response: Response = match get(&url) {
+        Ok (resp) => resp,
+        Err(e) => {
+            eprintln!("Failed to fetch URL {}: {}", url, e);
+            return None;
+        }
+    };
+    let html_text: String = match response.text() {
+        Ok(text) => text,
+        Err(e) => {
+            eprintln!("Failed to get HTML text: {}", e);
+            return None;
+        }
+    };
 
-    
+    let document: Html = Html::parse_document(&html_text);
+    let selector: Selector = Selector::parse("span").expect("Failed to parse selector");
 
+    for element in document.select(&selector) {
+        let text = element.text().collect::<Vec<_>>().join("");
+        if text.contains("License:") {
+            let license = text.replace("License: ", "").trim().to_string();
+            return Some(license);
+        }
+    }
 
-    //let name: String = "".to_string();
-    //let (version, checkout) = match resolve_version_and_checkout(&name, version, repository) {
-    //    (Some(version), Some(checkout)) => (Some(version), Some(checkout)),
-    //    (None, None) => (None, None),
-    //    _ => (None, None),
-    //};
-    //let version: String = "".to_string();
-    //let license: String = "".to_string();
-    //let repository_url: String = "".to_string();
-    //let subdirectory: String = "".to_string();
-    //let checkout: String = "".to_string();
-
-    //let new_project: GoProject = GoProject::new(name, version, license, repository_url, subdirectory, checkout);
-
-    //let (checkout, subdirectory) : String =  match fetch_checkout(&module_name, &version, &url) {
-    //    Ok((checkout, subdirectory)) => (checkout, subdirectory),
-    //    Err(_) => (None, None)
-    //};
-    
-    
-    
-    //let checkout: String = match resolve_checkout(&version, &url) {
-    //    Some(str) => str,
-    //    None => {
-    //        eprintln!("For this repository {} and version {}, there is no match.", &version, &url);
-    //        "".to_string()
-    //    }
-    //};
+    None
+}

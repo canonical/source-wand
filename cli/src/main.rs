@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{env, path::PathBuf, sync::Arc};
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
@@ -61,10 +61,12 @@ enum Command {
 fn main() {
     let url: String = "https://github.com/canonical/chisel".to_string();
     let version: String = "v1.2.0".to_string();
-    let project_root: PathBuf = PathBuf::from("/home/andrew/source-wand-projects");
+    let project_root: PathBuf = PathBuf::from(format!{
+        "{}/source-wand-projects/", std::env::var("HOME").unwrap()
+    });
     let module_name: String = "github.com/canonical/chisel".to_string();
     let mut graph: Graph<DependencyTreeNodeGo, String> = Graph::new();
-    parse_dependency(&url, &version, &project_root, &module_name, &mut graph); 
-    graph.print();
-    //println!("{}", graph.to_dot());
+    let graph = Arc::new(Graph::new());
+    parse_dependency(&url, &version, &project_root, &module_name, Arc::clone(&graph)); 
+    graph.print_dependencies();
 }
