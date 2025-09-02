@@ -88,6 +88,27 @@ impl<T> Graph<T> {
             }
         }
     }
+    pub fn print_graph(&self) {
+        println!("Graph Contents:");
+
+        // Get all node keys from the nodes map to ensure every node is included.
+        let mut sorted_node_keys: Vec<String> = self.nodes.iter().map(|entry| entry.key().clone()).collect();
+        sorted_node_keys.sort();
+
+        // Iterate over every node key.
+        for key in sorted_node_keys {
+            // Check if the node has any outgoing edges.
+            if let Some(edges_set) = self.edges.get(&key) {
+                // If it has edges, sort them for consistent printing.
+                let mut sorted_edges: Vec<&String> = edges_set.value().iter().collect();
+                sorted_edges.sort();
+                println!("{}: {:?}", key, sorted_edges);
+            } else {
+                // If the node has no outgoing edges, print an empty list.
+                println!("{}: []", key);
+            }
+        }
+    }
 }
 
 //    pub fn print_nodes(&self) {

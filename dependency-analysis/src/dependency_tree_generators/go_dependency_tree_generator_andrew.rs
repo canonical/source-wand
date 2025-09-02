@@ -11,16 +11,6 @@ use crate::dependency_tree_generators::go_depenendency_tree_struct::{DependencyT
 use rayon::prelude::*; // 1. Import Rayon's parallel iterator traits
 
 
-fn get_version(version_string: &str) -> &str {
-    if let Some((_, commit_hash)) = version_string.rsplit_once('-') {
-        // This is a pre-release version, return the commit hash
-        commit_hash
-    } else {
-        // This is a semantic version, return the original string
-        version_string
-    }
-}
-
 pub fn parse_dependency<'a>(
     url: &'a String,
     version: &'a String,
