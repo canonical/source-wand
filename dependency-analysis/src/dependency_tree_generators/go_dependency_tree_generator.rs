@@ -1,7 +1,7 @@
 use std::{collections::{HashMap, HashSet}, path::PathBuf, str::FromStr};
 
 use anyhow::{Error, Result};
-use reqwest::blocking::get;
+use reqwest::blocking::{get, Response};
 use scraper::{Html, Selector};
 use source_wand_common::{
     project::Project,
@@ -51,6 +51,10 @@ pub fn generate_go_dependency_tree(
     for module in &all_modules {
         let (name, version) = parse_module(module);
         let repository_url: String = extract_repository_url(&name, &mut repository_cache);
+        let license: String = match find_license(&name) {
+            Some(license) => license,
+            None => format!("unknown"),
+        };
 
         // let (checkout, subdirectory) = match fetch_checkout(&name, &version, &repository_url) {
         //     Ok((checkout, subdirectory)) => (checkout, subdirectory),
@@ -63,7 +67,7 @@ pub fn generate_go_dependency_tree(
             Project::new(
                 name,
                 version,
-                "".to_string(),
+                license,
                 repository_url,
                 subdirectory,
                 checkout,
@@ -147,6 +151,38 @@ fn resolve_vanity_import(module_path: &str) -> Option<String> {
             if parts.len() == 3 {
                 return Some(parts[2].to_string());
             }
+        }
+    }
+
+    None
+}
+
+fn find_license(module_path: &str) -> Option<String> {
+    let url: String = format!("https://pkg.go.dev/{}?go-get=1", module_path);
+
+    let response: Response = match get(&url) {
+        Ok (resp) => resp,
+        Err(e) => {
+            eprintln!("Failed to fetch URL {}: {}", url, e);
+            return None;
+        }
+    };
+    let html_text: String = match response.text() {
+        Ok(text) => text,
+        Err(e) => {
+            eprintln!("Failed to get HTML text: {}", e);
+            return None;
+        }
+    };
+
+    let document: Html = Html::parse_document(&html_text);
+    let selector: Selector = Selector::parse("span").expect("Failed to parse selector");
+
+    for element in document.select(&selector) {
+        let text = element.text().collect::<Vec<_>>().join("");
+        if text.contains("License:") {
+            let license = text.replace("License: ", "").trim().to_string();
+            return Some(license);
         }
     }
 
