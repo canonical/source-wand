@@ -8,13 +8,13 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone)]
 pub struct DependencyTreeNodeGo {
-    pub project: GoProject,
+    pub project: Project,
     pub dependencies: Vec<Arc<Mutex<DependencyTreeNodeGo>>>,
     pub rdependencies: Vec<Arc<Mutex<DependencyTreeNodeGo>>>,
 }
 
 impl DependencyTreeNodeGo {
-    pub fn new_with_deps(project: GoProject, 
+    pub fn new_with_deps(project: Project, 
         dependencies: Vec<Arc<Mutex<DependencyTreeNodeGo>>>, 
         rdependencies: Vec<Arc<Mutex<DependencyTreeNodeGo>>>,) -> Self {
         DependencyTreeNodeGo {
@@ -24,7 +24,7 @@ impl DependencyTreeNodeGo {
         }
     }
     
-    pub fn new(project: GoProject) -> Self {
+    pub fn new(project: Project) -> Self {
         let dependencies: Vec<Arc<Mutex<DependencyTreeNodeGo>>> = Vec::new();
         let rdependencies: Vec<Arc<Mutex<DependencyTreeNodeGo>>> = Vec::new();
         DependencyTreeNodeGo {
@@ -42,6 +42,7 @@ impl DependencyTreeNodeGo {
  * Value: Rc owners of DependencyTreeNodeGo
  */
 use dashmap::DashMap;
+use source_wand_common::project::Project;
 
 #[derive(Clone)]
 pub struct Graph<T> {
@@ -151,40 +152,3 @@ impl<DependencyTreeNodeGo: fmt::Debug> fmt::Debug for Graph<DependencyTreeNodeGo
         f.debug_struct("Graph").field("nodes", &self.nodes).finish()
     }
 }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// ### Project ###
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct GoProject {
-    pub name: String, //module name
-    pub version: String,
-    //pub license: String,
-    pub repository_url: String,
-    //pub subdirectory: Option<String>,
-    pub checkout: String,
-    // pub sourcecraft_track: Option<String>,
-    // pub sourcecraft_name: String
-    // pub sourcecraft_risk
-}
-
-impl GoProject {
-    pub fn new(
-        name: String,
-        version: String,
-        //license: String,
-        repository_url: String,
-        //subdirectory: Option<String>,
-        checkout: String,
-    ) -> Self {
-        GoProject {
-            name,
-            version,
-            //license,
-            repository_url,
-            //subdirectory,
-            checkout,
-        }
-    }
-}
-
