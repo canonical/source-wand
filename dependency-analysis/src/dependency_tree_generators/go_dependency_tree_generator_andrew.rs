@@ -11,74 +11,6 @@ use crate::dependency_tree_generators::go_depenendency_tree_struct::{DependencyT
 use rayon::prelude::*; // 1. Import Rayon's parallel iterator traits
 
 
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "PascalCase")]
-#[allow(dead_code)]
-struct GoMod {
-    pub module: Module,
-    #[serde(rename = "Go")]
-    pub go_version: Option<String>,
-    pub require: Option<Vec<Require>>,
-    pub exclude: Option<Vec<Exclude>>,
-    pub replace: Option<Vec<Replace>>,
-    pub retract: Option<Vec<Retract>>,
-    pub tool: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "PascalCase")]
-struct Module {
-    path: String,
-}
-
-
-// Represents an object in the "Require" array
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "PascalCase")]
-#[allow(dead_code)]
-struct Require {
-    path: String,
-    version: String,
-    indirect: Option<bool>,
-}
-
-// Represents an object in the "Exclude" array
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "PascalCase")]
-#[allow(dead_code)]
-struct Exclude {
-    path: String,
-    version: String,
-}
-
-// Represents an object in the "Replace" array
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "PascalCase")]
-#[allow(dead_code)]
-struct Replace {
-    old: ModuleVersion,
-    new: ModuleVersion,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "PascalCase")]
-#[allow(dead_code)]
-struct Retract {
-    low: String,
-    high: String,
-    rationale: Option<String>,
-}
-
-// Represents the "Old" and "New" objects within a "Replace" object
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "PascalCase")]
-#[allow(dead_code)]
-struct ModuleVersion {
-    path: String,
-    version: Option<String>,
-}
-
 fn get_version(version_string: &str) -> &str {
     if let Some((_, commit_hash)) = version_string.rsplit_once('-') {
         // This is a pre-release version, return the commit hash
@@ -249,7 +181,7 @@ fn get_repository_url_pkg_go_dev(module_path: &str) -> Option<String> {
 
 /// Clone the repository at the URL, Version, and Project Root (The path to clone to)
 /// Return the manipulator that's at the root of the repository
-fn clone_repo(url: &String, version: &Option<String>, project_root: &PathBuf) -> LocalProjectManipulator {
+fn clone_repo(url: &String, checkout: &Option<String>, project_root: &PathBuf) -> LocalProjectManipulator {
     let mut repo_root: PathBuf = project_root.clone();
     repo_root.push(Uuid::new_v4().to_string());
     let result = fs::create_dir_all(&repo_root);
@@ -265,9 +197,8 @@ fn clone_repo(url: &String, version: &Option<String>, project_root: &PathBuf) ->
         Err(e) => eprintln!("Error: {}", e),
     }
     // Get the correct checkout 
-    if let Some(ver) = &version {
-        let v = get_version(&ver);
-        match manipulator.run_shell(format!("git checkout {}", v)) {
+    if let Some(ver) = &checkout {
+        match manipulator.run_shell(format!("git checkout {}", ver)) {
             Ok(str) => println!("Checkout: {}", str),
             Err(e) => eprintln!("Error: {}", e),
         }
@@ -350,4 +281,74 @@ fn find_license(module_path: &str) -> Option<String> {
     }
 
     None
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+#[allow(dead_code)]
+struct GoMod {
+    pub module: Module,
+    #[serde(rename = "Go")]
+    pub go_version: Option<String>,
+    pub require: Option<Vec<Require>>,
+    pub exclude: Option<Vec<Exclude>>,
+    pub replace: Option<Vec<Replace>>,
+    pub retract: Option<Vec<Retract>>,
+    pub tool: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+struct Module {
+    path: String,
+}
+
+
+// Represents an object in the "Require" array
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+#[allow(dead_code)]
+struct Require {
+    path: String,
+    version: String,
+    indirect: Option<bool>,
+}
+
+// Represents an object in the "Exclude" array
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+#[allow(dead_code)]
+struct Exclude {
+    path: String,
+    version: String,
+}
+
+// Represents an object in the "Replace" array
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+#[allow(dead_code)]
+struct Replace {
+    old: ModuleVersion,
+    new: ModuleVersion,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+#[allow(dead_code)]
+struct Retract {
+    low: String,
+    high: String,
+    rationale: Option<String>,
+}
+
+// Represents the "Old" and "New" objects within a "Replace" object
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+#[allow(dead_code)]
+struct ModuleVersion {
+    path: String,
+    version: Option<String>,
 }

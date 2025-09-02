@@ -152,3 +152,4 @@ impl<DependencyTreeNodeGo: fmt::Debug> fmt::Debug for Graph<DependencyTreeNodeGo
         f.debug_struct("Graph").field("nodes", &self.nodes).finish()
     }
 }
+
