@@ -39,5 +39,6 @@ fn main() {
     let module_name: String = "github.com/canonical/chisel".to_string();
     let graph = Arc::new(Graph::new());
     parse_dependency(&url, &version, &project_root, &module_name, Arc::clone(&graph)); 
-    graph.print_dependencies();
+    graph.print_graph();
+    println!("Final map size: {}", graph.nodes.len());
 }
