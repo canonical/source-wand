@@ -10,3 +10,4 @@ Cargo.lock
 packages/
 to-complete/
 dependencies.yaml
+logs/
