@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::{Arc, Mutex}};
 
 use anyhow::{Ok, Result};
 use source_wand_common::{project::Project, project_manipulator::project_manipulator::ProjectManipulator};
@@ -10,7 +10,7 @@ use crate::{
 
 pub fn generate_go_build_requirements(
     project_manipulator: &dyn ProjectManipulator,
-    dependency_tree: &DependencyTreeNode,
+    dependency_tree: Arc<Mutex<DependencyTreeNode>>,
 ) -> Result<UniqueDependenciesList> {
     let build_requirements: Vec<Project> = serde_json::from_str(
         &project_manipulator.run_shell(
@@ -19,6 +19,8 @@ pub fn generate_go_build_requirements(
     )?;
 
     let all_dependencies: HashMap<String, Project> = dependency_tree
+        .lock()
+        .unwrap()
         .flatten()
         .dependencies
         .into_iter()

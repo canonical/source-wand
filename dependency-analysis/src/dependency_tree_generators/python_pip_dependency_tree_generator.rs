@@ -1,9 +1,13 @@
+use std::sync::{Arc, Mutex};
+
 use anyhow::Result;
 use source_wand_common::{project::Project, project_manipulator::project_manipulator::{AnyProjectManipulator, ProjectManipulator}};
 
 use crate::dependency_tree_node::DependencyTreeNode;
 
-pub fn generate_python_pip_dependency_tree(project_manipulator: &AnyProjectManipulator) -> Result<DependencyTreeNode> {
+pub fn generate_python_pip_dependency_tree(
+    project_manipulator: &AnyProjectManipulator
+) -> Result<Arc<Mutex<DependencyTreeNode>>> {
     let root_name: String = project_manipulator.run_shell("basename \"$PWD\"".to_string())?.trim().to_string();
     let raw_tree: String = project_manipulator.run_shell("pipgrip --requirements-file requirements.txt --tree".to_string())?;
 
@@ -81,10 +85,10 @@ pub fn generate_python_pip_dependency_tree(project_manipulator: &AnyProjectManip
         }
 
         let node: DependencyTreeNode = parsed_tree[i].node.clone();
-        parsed_tree[parent_index].node.dependencies.push(Box::new(node));
+        parsed_tree[parent_index].node.dependencies.push(Arc::new(Mutex::new(node)));
     }
 
-    Ok(parsed_tree[0].node.clone())
+    Ok(Arc::new(Mutex::new(parsed_tree[0].node.clone())))
 }
 
 fn is_padding(character: &char) -> bool {

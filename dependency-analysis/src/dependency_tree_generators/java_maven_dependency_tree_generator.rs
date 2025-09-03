@@ -1,9 +1,13 @@
+use std::sync::{Arc, Mutex};
+
 use anyhow::{Error, Result};
 use regex::Regex;
 use source_wand_common::{project::Project, project_manipulator::project_manipulator::{AnyProjectManipulator, ProjectManipulator}};
 use crate::dependency_tree_node::DependencyTreeNode;
 
-pub fn generate_java_maven_dependency_tree(project_manipulator: &AnyProjectManipulator) -> Result<DependencyTreeNode> {
+pub fn generate_java_maven_dependency_tree(
+    project_manipulator: &AnyProjectManipulator
+) -> Result<Arc<Mutex<DependencyTreeNode>>> {
     let logs: String = project_manipulator.run_shell(
         "mvn dependency:tree".to_string()
     )?;
@@ -21,10 +25,10 @@ pub fn generate_java_maven_dependency_tree(project_manipulator: &AnyProjectManip
         }
 
         let node: DependencyTreeNode = anotated_tree[i].node.clone();
-        anotated_tree[parent_index].node.dependencies.push(Box::new(node));
+        anotated_tree[parent_index].node.dependencies.push(Arc::new(Mutex::new(node)));
     }
 
-    Ok(anotated_tree[0].node.clone())
+    Ok(Arc::new(Mutex::new(anotated_tree[0].node.clone())))
 }
 
 #[derive(Debug)]

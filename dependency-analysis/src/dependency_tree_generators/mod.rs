@@ -1,3 +1,5 @@
+use std::sync::{Arc, Mutex};
+
 use anyhow::Result;
 use source_wand_common::project_manipulator::project_manipulator::AnyProjectManipulator;
 
@@ -13,15 +15,11 @@ pub mod java_maven_dependency_tree_generator;
 pub mod go_dependency_tree_generator;
 
 pub mod cdxgen_dependency_tree_generator;
-pub mod cdxgen_rust_dependency_tree_generator;
-pub mod cdxgen_python_dependency_tree_generator;
-pub mod cdxgen_java_dependency_tree_generator;
-pub mod cdxgen_go_dependency_tree_generator;
 
 pub fn generate_dependency_tree(
     build_system: BuildSystemIdentity,
     project_manipulator: &AnyProjectManipulator
-) -> Result<DependencyTreeNode> {
+) -> Result<Arc<Mutex<DependencyTreeNode>>> {
     match build_system {
         BuildSystemIdentity::RustCargo => {
             generate_cdxgen_dependency_tree(project_manipulator, Some("rust"))

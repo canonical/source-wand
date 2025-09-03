@@ -1,4 +1,4 @@
-use std::{fs, path::PathBuf};
+use std::{fs, path::PathBuf, sync::{Arc, Mutex}};
 
 use anyhow::Result;
 use build_systems::{
@@ -29,7 +29,7 @@ pub mod build_systems;
 pub mod dependency_tree_generators;
 pub mod build_requirements_generator;
 
-pub fn find_dependency_tree(request: DependencyTreeRequest) -> Result<DependencyTreeNode> {
+pub fn find_dependency_tree(request: DependencyTreeRequest) -> Result<Arc<Mutex<DependencyTreeNode>>> {
     let project_manipulator: AnyProjectManipulator = match request {
         DependencyTreeRequest::LocalProject { path } => {
             LocalProjectManipulator::new(path, false).to_any()
@@ -67,14 +67,16 @@ pub fn find_dependency_tree(request: DependencyTreeRequest) -> Result<Dependency
     // let dependencies: Vec<AnyRequiredDependency> = build_system.get_required_dependencies();
     // project_manipulator.ensure_dependencies(dependencies)?;
 
-    let dependency_tree: Result<DependencyTreeNode> = generate_dependency_tree(build_system, &project_manipulator);
+    let dependency_tree: Result<Arc<Mutex<DependencyTreeNode>>> = generate_dependency_tree(build_system, &project_manipulator);
     project_manipulator.cleanup();
 
     dependency_tree
 }
 
-
-pub fn find_build_requirements(request: DependencyTreeRequest, dependency_tree: &DependencyTreeNode) -> Result<UniqueDependenciesList> {
+pub fn find_build_requirements(
+    request: DependencyTreeRequest,
+    dependency_tree: Arc<Mutex<DependencyTreeNode>>,
+) -> Result<UniqueDependenciesList> {
     let project_manipulator: AnyProjectManipulator = match request {
         DependencyTreeRequest::LocalProject { path } => {
             LocalProjectManipulator::new(path, false).to_any()
@@ -112,7 +114,12 @@ pub fn find_build_requirements(request: DependencyTreeRequest, dependency_tree: 
     let dependencies: Vec<AnyRequiredDependency> = build_system.get_required_dependencies();
     project_manipulator.ensure_dependencies(dependencies)?;
 
-    let build_requirements: Result<UniqueDependenciesList> = generate_build_requirements(build_system, &project_manipulator, dependency_tree);
+    let build_requirements: Result<UniqueDependenciesList> = generate_build_requirements(
+        build_system,
+        &project_manipulator,
+        dependency_tree,
+    );
+
     project_manipulator.cleanup();
 
     build_requirements

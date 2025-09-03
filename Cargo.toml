@@ -5,7 +5,5 @@ members = [
     "common",
     "concurrent-executor",
     "dependency-analysis",
-    "dependency-tree",
-    "onboarding",
     "replication"
 ]

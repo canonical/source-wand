@@ -55,7 +55,7 @@ impl DependencyTreeNode {
         }
 
         for dependency in &self.dependencies {
-            dependency.flatten_node(projects, visited);
+            dependency.lock().unwrap().flatten_node(projects, visited);
         }
     }
 }

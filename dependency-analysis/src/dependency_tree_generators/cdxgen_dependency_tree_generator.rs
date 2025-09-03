@@ -1,5 +1,5 @@
 use std::{
-    collections::HashMap, fs, path::PathBuf,
+    collections::HashMap, fs, path::PathBuf, sync::{Arc, Mutex},
 };
 
 use anyhow::{Error, Result};
@@ -49,7 +49,7 @@ struct BomDependency {
 pub fn generate_cdxgen_dependency_tree(
     project_manipulator: &dyn ProjectManipulator,
     _language: Option<&str>,
-) -> Result<DependencyTreeNode> {
+) -> Result<Arc<Mutex<DependencyTreeNode>>> {
     project_manipulator.run_shell(
         format!(
             "cdxgen -o bom.source-wand.json --output-format json",
@@ -58,7 +58,7 @@ pub fn generate_cdxgen_dependency_tree(
 
     let bom_path: PathBuf = project_manipulator.get_working_directory().join("bom.source-wand.json");
 
-    let bom_raw = fs::read_to_string(&bom_path)
+    let bom_raw: String = fs::read_to_string(&bom_path)
         .map_err(|e| Error::msg(format!("Failed to read bom.json: {}", e)))?;
 
     fs::remove_file(&bom_path)
@@ -92,8 +92,8 @@ pub fn generate_cdxgen_dependency_tree(
     component_map.insert(bom.metadata.component.bom_ref.clone(), root_project);
 
     for component in bom.components {
-        let mut group_id = Some(String::new());
-        let mut artifact_id = Some(String::new());
+        let mut group_id: Option<String> = Some(String::new());
+        let mut artifact_id: Option<String> = Some(String::new());
 
         for prop in &component.properties {
             if prop.name == "group_id" {
@@ -103,7 +103,7 @@ pub fn generate_cdxgen_dependency_tree(
             }
         }
 
-        let project = Project::new(
+        let project: Project = Project::new(
             component.name,
             component.version.unwrap_or_else(|| "Not found".to_string()),
             group_id.unwrap_or_default(),
@@ -120,23 +120,23 @@ pub fn generate_cdxgen_dependency_tree(
         dependency_map.insert(dep.ref_, dep.depends_on);
     }
 
-    let root_bom_ref = bom.metadata.component.bom_ref;
-    let root_node = build_node_iterative(&root_bom_ref, &component_map, &dependency_map)?;
+    let root_bom_ref: String = bom.metadata.component.bom_ref;
+    let root_node: Arc<Mutex<DependencyTreeNode>> = build_node_iterative(&root_bom_ref, &component_map, &dependency_map)?;
 
-    Ok(*root_node)
+    Ok(root_node)
 }
 
 struct StackFrame<'a> {
     component_ref: String,
     child_refs_iter: std::slice::Iter<'a, String>,
-    children: Vec<Box<DependencyTreeNode>>,
+    children: Vec<Arc<Mutex<DependencyTreeNode>>>,
 }
 
 fn build_node_iterative(
     root_ref: &str,
     component_map: &HashMap<String, Project>,
     dependency_map: &HashMap<String, Vec<String>>,
-) -> Result<Box<DependencyTreeNode>> {
+) -> Result<Arc<Mutex<DependencyTreeNode>>> {
     let mut stack: Vec<StackFrame> = Vec::new();
 
     let root_children = dependency_map.get(root_ref)
@@ -149,11 +149,10 @@ fn build_node_iterative(
         children: Vec::new(),
     });
 
-    let mut result: Option<Box<DependencyTreeNode>> = None;
+    let mut result: Option<Arc<Mutex<DependencyTreeNode>>> = None;
 
     while let Some(top) = stack.last_mut() {
         if let Some(next_child_ref) = top.child_refs_iter.next() {
-            // For each child, push a new frame on the stack
             let child_children = dependency_map.get(next_child_ref.as_str())
                 .map(|v| v.as_slice())
                 .unwrap_or(&[]);
@@ -164,20 +163,21 @@ fn build_node_iterative(
                 children: Vec::new(),
             });
         } else {
-            // No more children remain, can build node from children and pop
-            let frame = stack.pop().unwrap();
+            let frame: StackFrame<'_> = stack.pop().unwrap();
 
-            let project = component_map.get(&frame.component_ref)
+            let project: Project = component_map.get(&frame.component_ref)
                 .ok_or_else(|| Error::msg(format!("Component with ref '{}' not found in map", &frame.component_ref)))?
                 .clone();
 
-            let node = Box::new(DependencyTreeNode::new(project, frame.children));
+            let node: Arc<Mutex<DependencyTreeNode>> = Arc::new(
+                Mutex::new(
+                    DependencyTreeNode::new(project,frame.children)
+                )
+            );
 
             if let Some(parent) = stack.last_mut() {
-                // Add this node to parent's children vec
                 parent.children.push(node);
             } else {
-                // No parent, this is the root node
                 result = Some(node);
             }
         }

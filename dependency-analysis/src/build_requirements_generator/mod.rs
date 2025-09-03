@@ -1,3 +1,5 @@
+use std::sync::{Arc, Mutex};
+
 use anyhow::Result;
 
 use source_wand_common::project_manipulator::project_manipulator::AnyProjectManipulator;
@@ -14,7 +16,7 @@ pub mod go_build_requirements_generator;
 pub fn generate_build_requirements(
     build_system: BuildSystemIdentity,
     project_manipulator: &AnyProjectManipulator,
-    dependency_tree: &DependencyTreeNode,
+    dependency_tree: Arc<Mutex<DependencyTreeNode>>,
 ) -> Result<UniqueDependenciesList> {
     match build_system {
         // BuildSystemIdentity::RustCargo => {

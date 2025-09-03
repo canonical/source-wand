@@ -1,4 +1,4 @@
-use std::{fs::create_dir_all, path::PathBuf};
+use std::{fs::create_dir_all, path::PathBuf, sync::{Arc, Mutex, MutexGuard}};
 
 use anyhow::Result;
 use clap::Parser;
@@ -55,7 +55,7 @@ pub fn plan_replication() -> Result<ReplicationPlan> {
 
             let mut packages: Vec<Package> = Vec::new();
 
-            let dependency_tree: DependencyTreeNode = find_dependency_tree(
+            let dependency_tree: Arc<Mutex<DependencyTreeNode>> = find_dependency_tree(
                 DependencyTreeRequest::from_git_project(
                     origin.git.clone(),
                     Some(origin.reference.clone())
@@ -103,7 +103,7 @@ pub fn plan_replication() -> Result<ReplicationPlan> {
                         let package_destination_reference: String = environment.apply(&package_destination.reference);
 
                         let dependencies: Vec<Dependency> = find_dependencies_for_package(
-                            &dependency_tree,
+                            dependency_tree.clone(),
                             &name,
                         );
 
@@ -140,12 +140,26 @@ pub fn plan_replication() -> Result<ReplicationPlan> {
     }
 }
 
-fn find_dependencies_for_package(root: &DependencyTreeNode, package_name: &str) -> Vec<Dependency> {
-    if root.project.name.replace("/", "-").replace(".", "-") == package_name {
-        return root.dependencies
+fn find_dependencies_for_package(root: Arc<Mutex<DependencyTreeNode>>, package_name: &str) -> Vec<Dependency> {
+    let (name, dependencies) = {
+        let node: MutexGuard<'_, DependencyTreeNode> = root.lock().unwrap();
+        (
+            node.project.name.replace("/", "-").replace(".", "-"),
+            node.dependencies.clone(),
+        )
+    };
+
+    if name == package_name {
+        return dependencies
             .iter()
             .map(|dep| {
-                let environment: Environment = Environment::new(&dep.project.name, &dep.project.version);
+                let environment: Environment = {
+                    let dep_guard: MutexGuard<'_, DependencyTreeNode> = dep.lock().unwrap();
+                    Environment::new(
+                        &dep_guard.project.name, 
+                        &dep_guard.project.version,
+                    )
+                };
 
                 Dependency {
                     name: environment.name.replace("/", "-").replace(".", "-"),
@@ -155,8 +169,8 @@ fn find_dependencies_for_package(root: &DependencyTreeNode, package_name: &str) 
             .collect();
     }
 
-    for child in &root.dependencies {
-        let found = find_dependencies_for_package(child, package_name);
+    for child in dependencies {
+        let found: Vec<Dependency> = find_dependencies_for_package(child, package_name);
         if !found.is_empty() {
             return found;
         }

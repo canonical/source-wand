@@ -1,4 +1,4 @@
-use std::{collections::{HashMap, HashSet}, path::PathBuf, str::FromStr};
+use std::{collections::{HashMap, HashSet}, path::PathBuf, str::FromStr, sync::{Arc, Mutex}};
 
 use anyhow::{Error, Result};
 use reqwest::blocking::get;
@@ -15,7 +15,7 @@ use crate::dependency_tree_node::DependencyTreeNode;
 
 pub fn generate_go_dependency_tree(
     project_manipulator: &dyn ProjectManipulator,
-) -> Result<DependencyTreeNode> {
+) -> Result<Arc<Mutex<DependencyTreeNode>>> {
     let graph_raw: String = project_manipulator.run_shell("go mod graph".to_string())?;
 
     let mut dependencies_map: HashMap<String, Vec<String>> = HashMap::new();
@@ -72,9 +72,9 @@ pub fn generate_go_dependency_tree(
     }
 
     let mut visited: HashSet<String> = HashSet::new();
-    let tree: Box<DependencyTreeNode> = build_tree(root, &dependencies_map, &project_cache, &mut visited);
+    let tree: Arc<Mutex<DependencyTreeNode>> = build_tree(root, &dependencies_map, &project_cache, &mut visited);
 
-    Ok(*tree)
+    Ok(tree)
 }
 
 fn build_tree(
@@ -82,9 +82,9 @@ fn build_tree(
     dependencies_map: &HashMap<String, Vec<String>>,
     project_cache: &HashMap<String, Project>,
     visited: &mut HashSet<String>,
-) -> Box<DependencyTreeNode> {
+) -> Arc<Mutex<DependencyTreeNode>> {
     if visited.contains(root) {
-        return Box::new(DependencyTreeNode::new(project_cache[root].clone(), vec![]));
+        return Arc::new(Mutex::new(DependencyTreeNode::new(project_cache[root].clone(), vec![])));
     }
     visited.insert(root.to_string());
 
@@ -95,7 +95,7 @@ fn build_tree(
         .map(|dep| build_tree(dep, dependencies_map, project_cache, visited))
         .collect();
 
-    Box::new(DependencyTreeNode::new(project_cache[root].clone(), dependencies))
+    Arc::new(Mutex::new(DependencyTreeNode::new(project_cache[root].clone(), dependencies)))
 }
 
 fn parse_module(s: &str) -> (String, String) {

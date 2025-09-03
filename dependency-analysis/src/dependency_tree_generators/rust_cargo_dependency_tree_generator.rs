@@ -1,9 +1,13 @@
+use std::sync::{Arc, Mutex};
+
 use anyhow::{Error, Result};
 use source_wand_common::{project::Project, project_manipulator::project_manipulator::{AnyProjectManipulator, ProjectManipulator}};
 
 use crate::dependency_tree_node::DependencyTreeNode;
 
-pub fn generate_rust_cargo_dependency_tree(project_manipulator: &AnyProjectManipulator) -> Result<DependencyTreeNode> {
+pub fn generate_rust_cargo_dependency_tree(
+    project_manipulator: &AnyProjectManipulator
+) -> Result<Arc<Mutex<DependencyTreeNode>>> {
     let raw_tree: String = project_manipulator.run_shell("cargo tree --prefix depth --format \" ;; {p} ;; {l} ;; {r}\"".to_string())?;
     let mut parsed_tree: Vec<DepthAnnotatedDependencyTreeNode> = Vec::new();
 
@@ -40,10 +44,10 @@ pub fn generate_rust_cargo_dependency_tree(project_manipulator: &AnyProjectManip
         }
 
         let node: DependencyTreeNode = parsed_tree[i].node.clone();
-        parsed_tree[parent_index].node.dependencies.push(Box::new(node));
+        parsed_tree[parent_index].node.dependencies.push(Arc::new(Mutex::new(node)));
     }
 
-    Ok(parsed_tree[0].node.clone())
+    Ok(Arc::new(Mutex::new(parsed_tree[0].node.clone())))
 }
 
 #[derive(Debug)]

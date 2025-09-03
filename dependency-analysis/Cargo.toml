@@ -15,7 +15,7 @@ reqwest = { version = "0.12.15", features = ["blocking"] }
 scraper = "0.23.1"
 
 source-wand-common = { path = "../common" }
-source-wand-dependency-tree = { path = "../dependency-tree" }
 anyhow = "1.0.98"
 tokio = { version = "1.45.1", features = ["full"] }
 futures = "0.3.31"
+rayon = "1.11.0"

@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, sync::{Arc, Mutex}};
 
 use anyhow::{Error, Result};
 use clap::{ArgAction, Parser, Subcommand, ValueEnum};
@@ -62,14 +62,14 @@ pub enum OutputFormat {
 
 #[derive(Debug, Clone)]
 enum OutputData {
-    Tree(DependencyTreeNode),
+    Tree(Arc<Mutex<DependencyTreeNode>>),
     List(UniqueDependenciesList),
 }
 
 impl OutputData {
     pub fn to_string(&self) -> Result<String, String> {
         match self {
-            OutputData::Tree(tree) => tree.to_string(),
+            OutputData::Tree(tree) => tree.lock().unwrap().to_string(),
             OutputData::List(list) => Ok(list.to_string()),
         }
     }
@@ -119,7 +119,7 @@ pub fn dependencies_command(args: &DependenciesArgs) -> Result<()> {
                     DependencyTreeRequest::LocalProject {
                         path: args.path.clone()
                     },
-                    &dependency_tree
+                    dependency_tree.clone(),
                 ).map_err(|e| Error::msg(e))?
             },
             DependenciesCommand::Git(args) => {
@@ -128,7 +128,7 @@ pub fn dependencies_command(args: &DependenciesArgs) -> Result<()> {
                         url: args.url.clone(),
                         branch: args.branch.clone(),
                     },
-                    &dependency_tree
+                    dependency_tree.clone(),
                 ).map_err(|e| Error::msg(e))?
             },
             DependenciesCommand::ByName(args) => {
@@ -137,7 +137,7 @@ pub fn dependencies_command(args: &DependenciesArgs) -> Result<()> {
                         name: args.name.clone(),
                         version: args.version.clone(),
                     },
-                    &dependency_tree
+                    dependency_tree.clone(),
                 ).map_err(|e| Error::msg(e))?
             },
         })
@@ -146,7 +146,7 @@ pub fn dependencies_command(args: &DependenciesArgs) -> Result<()> {
         OutputData::Tree(dependency_tree)
     }
     else {
-        OutputData::List(dependency_tree.flatten())
+        OutputData::List(dependency_tree.lock().unwrap().flatten())
     };
 
     match args.format {

@@ -22,13 +22,17 @@ impl DependencyTreeNode {
         if visited.insert(project_hash.clone()) {
             let dependencies: Vec<Project> = self.dependencies
                 .iter()
-                .map(|dependency| dependency.project.clone())
+                .map(
+                    |dependency| {
+                        dependency.lock().unwrap().project.clone()
+                    }
+                )
                 .collect();
             map.insert(project_hash, dependencies);
         }
 
         for dependency in &self.dependencies {
-            dependency.traverse_for_map(map, visited);
+            dependency.lock().unwrap().traverse_for_map(map, visited);
         }
     }
 }
