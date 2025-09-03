@@ -4,14 +4,19 @@ use crate::model::{dependency::Dependency, package_destination::PackageDestinati
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Package {
-    pub level: u32,
     pub origin: PackageOrigin,
     pub destination: PackageDestination,
     pub dependencies: Vec<Dependency>,
+    pub is_library: bool,
 }
 
 impl Package {
-    pub fn new(level: u32, origin: PackageOrigin, destination: PackageDestination, dependencies: Vec<Dependency>) -> Self {
-        Package { level, origin, destination, dependencies }
+    pub fn new(
+        origin: PackageOrigin,
+        destination: PackageDestination,
+        dependencies: Vec<Dependency>,
+        is_library: bool,
+    ) -> Self {
+        Package { origin, destination, dependencies, is_library }
     }
 }
