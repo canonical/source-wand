@@ -1,6 +1,6 @@
-use std::{fs::create_dir_all, path::PathBuf, sync::{Arc, Mutex, MutexGuard}};
+use std::{collections::HashSet, fs::create_dir_all, path::PathBuf, sync::{Arc, Mutex, MutexGuard}};
 
-use anyhow::Result;
+use anyhow::{bail, Result};
 use clap::Parser;
 use serde_json::Value;
 use source_wand_common::{
@@ -62,6 +62,76 @@ pub fn plan_replication() -> Result<ReplicationPlan> {
                 )
             )?;
 
+            let build_dependencies_whitelist: HashSet<(String, String)> = {
+                let raw: serde_json::Value = serde_json::from_str(
+                    top_level.run_shell(
+                        "go mod edit -json".to_string()
+                    )?.as_str()
+                )?;
+
+                if let Value::Object(module) = raw {
+                    let module_name: &String = match module.get("Module") {
+                        Some(Value::Object(module)) => {
+                            match module.get("Path") {
+                                Some(Value::String(module_name)) => {
+                                    &module_name
+                                        .replace("/", "-")
+                                        .replace(".", "-")
+                                },
+                                _ => bail!("Dependencies whitelist does not contain Module -> Path field"),
+                            }
+                        },
+                        _ => bail!("Dependencies whitelist does not contain Module field"),
+                    };
+
+                    let module_version: String = origin.reference
+                        .split('/')
+                        .last()
+                        .unwrap_or_default()
+                        .to_string();
+
+                    let dependencies: Vec<(String, String)> = match module.get("Require") {
+                        Some(Value::Array(dependencies)) => {
+                            let mut dependencies: Vec<(String, String)> = dependencies.iter()
+                                .map(
+                                    |dependency| {
+                                        match dependency {
+                                            Value::Object(dependency) => {
+                                                let name: &String = match dependency.get("Path") {
+                                                    Some(Value::String(path)) => {
+                                                        &path
+                                                            .replace("/", "-")
+                                                            .replace(".", "-")
+                                                    },
+                                                    _ => bail!("Dependencies whitelist Require[i].Path was not a String"),
+                                                };
+                                                let version: &String = match dependency.get("Version") {
+                                                    Some(Value::String(version)) => version,
+                                                    _ => bail!("Dependencies whitelist Require[i].Version was not a String"),
+                                                };
+
+                                                Ok((name.clone(), version.clone()))
+                                            },
+                                            _ => bail!("Dependencies whitelist Require[i] field was not an object"),
+                                        }
+                                    }
+                                )
+                                .collect::<Result<Vec<_>, anyhow::Error>>()?;
+
+                            dependencies.push((module_name.clone(), module_version.clone()));
+
+                            dependencies
+                        },
+                        _ => bail!("Dependencies whitelist does not contain Require field")
+                    };
+
+                    dependencies.into_iter().collect::<HashSet<(String, String)>>()
+                }
+                else {
+                    bail!("Dependencies whitelist is not an object")
+                }
+            };
+
             let build_dependencies: serde_json::Value = serde_json::from_str(
                 top_level.run_shell(
                     "go list -json -m all | jq -s".to_string()
@@ -89,6 +159,10 @@ pub fn plan_replication() -> Result<ReplicationPlan> {
                             .as_str()
                             .unwrap_or_default()
                             .to_string();
+
+                        if !build_dependencies_whitelist.contains(&(name.clone(), version.clone())) {
+                            continue;
+                        }
 
                         let cache_path: String = build_dependency.get("Dir")
                             .unwrap_or(&Value::String(String::new()))

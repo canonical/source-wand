@@ -14,7 +14,7 @@ pub fn generate_go_build_requirements(
 ) -> Result<UniqueDependenciesList> {
     let build_requirements: Vec<Project> = serde_json::from_str(
         &project_manipulator.run_shell(
-            "go list -m -json all | jq -s '[.[] | {name: .Path, version: (.Version // \"\"), license: \"\", repository: \"\"}]'".to_string()
+            "go mod edit -json | jq '[.Module | {name: .Path, version: \"\", license: \"\", repository: \"\"}] + [.Require[] | {name: .Path, version: .Version, license: \"\", repository: \"\"}]'".to_string()
         )?
     )?;
 
