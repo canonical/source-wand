@@ -65,8 +65,19 @@ fn main() {
         "{}/source-wand-projects/", std::env::var("HOME").unwrap()
     });
     let module_name: String = "github.com/canonical/chisel".to_string();
-    let mut graph: Graph<DependencyTreeNodeGo, String> = Graph::new();
-    let graph = Arc::new(Graph::new());
-    parse_dependency(&url, &version, &project_root, &module_name, Arc::clone(&graph)); 
-    graph.print_dependencies();
+    //let graph = Arc::new(Graph::new());
+    //parse_dependency(&url, &version, &project_root, &module_name, Arc::clone(&graph)); 
+    //graph.print_graph();
+    //println!("Final map size: {}", graph.nodes.len());
+    //println!("{:#?}", graph.get_node_list());
+
+    let replication_args = ReplicationInitArgs {};
+
+    let _ = replicate_init_command(&replication_args);
+
+    // Replication Plan Andrew Go
+    let rep_plan = replication_plan_andrew_go(&url, &version, &project_root, &module_name).unwrap();
+    println!("{:#?}", rep_plan);
+
+
 }
