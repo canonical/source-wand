@@ -75,7 +75,7 @@ fn handle_node_execution(
                 "{:<120} context: {}",
                 format!(
                     "{} {} {}",
-                    "[skip]".to_string().yellow(),
+                    "[skip]".yellow(),
                     node.transformation.get_name().blue(),
                     reason.italic(),
                 ),
