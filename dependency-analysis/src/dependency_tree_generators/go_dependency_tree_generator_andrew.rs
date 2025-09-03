@@ -1,4 +1,4 @@
-use std::{collections::HashSet, fs, path::PathBuf, str::FromStr, sync::Arc};
+use std::{collections::{HashMap, HashSet}, fs, path::PathBuf, str::FromStr, sync::Arc};
 use anyhow::Result;
 use reqwest::blocking::{get, Response};
 use scraper::{Html, Selector};
@@ -31,7 +31,7 @@ pub fn parse_dependency<'a>(
     // 2. Sourcecraft Name (+ version)) -> API (See if there is a track at the version)
     //########## TODO #################
 
-    match graph.nodes.entry(module_name.clone()) {
+    match graph.nodes.entry(format!("{}-{}", module_name.clone(), version.clone())) {
         dashmap::mapref::entry::Entry::Occupied(_) => {
             return;
         }
@@ -54,14 +54,15 @@ pub fn parse_dependency<'a>(
                         None => subdirectory = None
                     }
                 } Err(_e) => {
-
                 }
             }
             let license: String = find_license(&module_name).unwrap_or("".to_string());
             
             let project_manipulator: LocalProjectManipulator = clone_repo(url, &checkout, &path);
+
+            let _ = project_manipulator.run_shell("rm go.mod".to_string());
             let _ = project_manipulator.run_shell(format!("go mod init {}", &module_name));
-            let _ = project_manipulator.run_shell("sed -i 's/^go 1\\..*/go 1.18.0/' go.mod".to_string());
+            //let _ = project_manipulator.run_shell("sed -i 's/^go 1\\..*/go 1.18.0/' go.mod".to_string());
             let _ = project_manipulator.run_shell("go mod tidy".to_string());
             let _go_mod: String = match project_manipulator.run_shell("go mod edit -json".to_string()) {
                 Ok(str) => str,
@@ -70,7 +71,7 @@ pub fn parse_dependency<'a>(
                     return
                 }, 
             }; 
-            //println!("Go.Mod String: {}", &_go_mod);
+            println!("Go.Mod String: {}", &_go_mod);
             let _go_mod_parsed: Option<GoMod> = match serde_json::from_str(&_go_mod) {
                 Ok(gm) => gm,
                 Err(e) => {
@@ -80,7 +81,16 @@ pub fn parse_dependency<'a>(
                     None
                 }
             };
-            // STEP: Create A New Project //
+            let go_list: String = match project_manipulator.run_shell("go list -m all".to_string()) {
+                Ok(str) => str,
+                Err(e) => {
+                    println!("{}", e.to_string());
+                    return
+                },
+            };
+            println!("Go list for {}: {}", &module_name, &go_list);
+            let go_list_map = parse_go_list_dependencies(&go_list);
+            // ################## STEP: Create A New Project ####################### //
 
             let new_project: Project = Project::new(module_name.clone(), version.clone(), license, url.clone(), subdirectory.clone(), checkout.clone());
             let new_node: DependencyTreeNodeGo = DependencyTreeNodeGo::new(new_project);
@@ -93,7 +103,18 @@ pub fn parse_dependency<'a>(
                     let children_to_process: Vec<(String, String, String)> = requires.par_iter().filter_map(|dep| {
                         let child = dep.path.clone();
                         if !graph.does_key_exist(&child) {  // Rough check; entry in recursion will handle races
-                            Some((dep.path.clone(), dep.version.clone(), get_repository_url(&dep.path)))
+                            // Check To Send Right Version
+                            let chosen_version = match go_list_map.get(&child) {
+                                Some(str) => {
+                                    println!("@&@&@&@&@& Found version in go list: {}", &child);
+                                    str
+                                }
+                                None => {
+                                    println!("################ NO FIND VERSION IN GO LIST: {}", &child);
+                                    &dep.version
+                                }
+                            };
+                            Some((dep.path.clone(), chosen_version.clone(), get_repository_url(&dep.path)))
                         } else {
                             None
                         }
@@ -105,14 +126,13 @@ pub fn parse_dependency<'a>(
                     requires.par_iter().for_each(|dep| {
                         let child = dep.path.clone();
                         println!("## Parent: {} | Child: {}", &parent, &child);
-                        graph.edges.entry(parent.clone())
+                        graph.edges.entry(format!("{}-{}", parent.clone(), version.clone()))
                             .or_insert_with(HashSet::new)
                             .insert(child.clone());
                         println!("@@@@ dependency {} has dep {}", &parent, &child);
                     });
                 }
             }
-            project_manipulator.cleanup();
         }
     }
 }
@@ -120,6 +140,17 @@ pub fn parse_dependency<'a>(
 ////////////////////////////////////////////////////////////////////////////////////////////
 // ################### HELPER FUNCTIONS #######################
 
+fn parse_go_list_dependencies(input: &str) -> HashMap<String, String> {
+    let mut dependencies = HashMap::new();
+
+    for line in input.lines() {
+        let trimmed_line = line.trim();
+        if let Some((module, version)) = trimmed_line.split_once(" ") {
+            dependencies.insert(module.to_string(), version.to_string());
+        }
+    }
+    dependencies
+}
 
 /// Resolves the Go module name to the repository URL (for `git clone`)
 /// 
@@ -181,7 +212,7 @@ fn clone_repo(url: &String, checkout: &Option<String>, project_root: &PathBuf) -
         println!("Successfully created directory!");
     }
     let manipulator: LocalProjectManipulator = LocalProjectManipulator::new(
-        repo_root, true);
+        repo_root, false);
     match manipulator.try_run_shell(format!("git clone \"{}\" .", url,), 20) {
         Ok(str) => println!("Clone: {}", str),
         Err(e) => eprintln!("Error: {}", e),
