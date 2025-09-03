@@ -28,6 +28,7 @@ pub fn generate_build_requirements(
         // },
         BuildSystemIdentity::Go => {
             generate_go_build_requirements(project_manipulator, dependency_tree)
+            //TODO: Replace Build Requirements With Flatten
         },
         _ => { todo!() },
     }

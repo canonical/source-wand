@@ -111,7 +111,8 @@ pub fn dependencies_command(args: &DependenciesArgs) -> Result<()> {
             ).map_err(|e| Error::msg(e))?
         },
     };
-
+    //TODO: Need to edit outputdata -> Add option for CSV
+    //TODO: Need to allow for the find_build_requirements -> 
     let output_data: OutputData = if args.minimal_build_requirements {
         OutputData::List(match &args.command {
             DependenciesCommand::Local(args) => {

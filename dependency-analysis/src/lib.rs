@@ -113,6 +113,7 @@ pub fn find_build_requirements(request: DependencyTreeRequest, dependency_tree: 
     project_manipulator.ensure_dependencies(dependencies)?;
 
     let build_requirements: Result<UniqueDependenciesList> = generate_build_requirements(build_system, &project_manipulator, dependency_tree);
+    //TODO: Edit `generate_build_requirements`
     project_manipulator.cleanup();
 
     build_requirements

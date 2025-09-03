@@ -56,3 +56,20 @@ pub fn generate_go_build_requirements(
 
     Ok(UniqueDependenciesList::new(build_requirements))
 }
+
+pub fn generate_go_build_requirements_flat(
+    project_manipulator: &dyn ProjectManipulator,
+) -> Result<UniqueDependenciesList> {
+    // 1. Get Build Requirements From Go.Mod
+    // >> Option 1: go mod edit -json | jq -r '.Require[] | "\(.Path)@\(.Version)"'
+    // >> Option 2: go mod edit -json | jq -r '.Require'
+
+    // 2. Parse To Create New Projects (& Add To List)
+    // >> (Functions Needed) >> Generate License, Find Repository, Subdirectory, Checkout
+    
+    // 3. Add the list to a UniqueDependenciesList -> And Return
+
+
+
+
+}
