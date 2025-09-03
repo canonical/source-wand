@@ -1,4 +1,4 @@
-use std::{fs::create_dir_all, path::PathBuf};
+use std::{collections::HashSet, fs::create_dir_all, path::PathBuf, sync::Arc};
 
 use anyhow::Result;
 use clap::Parser;
@@ -13,19 +13,10 @@ use source_wand_common::{
     }
 };
 use source_wand_dependency_analysis::{
-    dependency_tree_node::DependencyTreeNode,
-    dependency_tree_request::DependencyTreeRequest,
-    find_dependency_tree
+    dependency_tree_generators::{go_dependency_tree_generator_andrew::parse_dependency, go_depenendency_tree_struct::{DependencyTreeNodeGo, Graph}}, dependency_tree_node::DependencyTreeNode, dependency_tree_request::DependencyTreeRequest, find_dependency_tree
 };
 use source_wand_replication::{model::{
-    dependency::Dependency,
-    package::Package,
-    package_destination::PackageDestination,
-    package_destination_git::PackageDestinationGit,
-    package_origin::PackageOrigin,
-    package_origin_go_cache::PackageOriginGoCache,
-    replication_manifest::ReplicationManifest,
-    replication_plan::ReplicationPlan
+    dependency::Dependency, package::Package, package_destination::{self, PackageDestination}, package_destination_git::PackageDestinationGit, package_origin::PackageOrigin, package_origin_git::PackageOriginGit, package_origin_go_cache::PackageOriginGoCache, replication_manifest::ReplicationManifest, replication_plan::ReplicationPlan
 }, plan::environment::Environment};
 use uuid::Uuid;
 
@@ -36,6 +27,87 @@ pub fn replicate_plan_command(_args: &ReplicationPlanArgs) -> Result<()> {
     plan_replication()?;
     Ok(())
 }
+
+pub fn replication_plan_andrew_go(
+    url: & String,
+    version: & String,
+    project_root: & PathBuf,
+    module_name: & String,
+) -> Result<ReplicationPlan> {
+    let replication_manifest: ReplicationManifest = read_yaml_file("replication.yaml")?;
+    match replication_manifest.origin {
+        PackageOrigin::Git(origin) => {
+            let uuid: Uuid = Uuid::new_v4();
+            let top_level_directory: PathBuf = PathBuf::from(format!("./source-wand/{}", uuid));
+            create_dir_all(&top_level_directory)?;
+            let graph: Arc<Graph<DependencyTreeNodeGo>> = Arc::new(Graph::new());
+            parse_dependency(&url, &version, &project_root, &module_name, Arc::clone(&graph));
+            let build_dependencies = graph.get_node_list();
+            let mut packages: Vec<Package> = Vec::new();
+            for build_dependency in build_dependencies {
+                let node = graph.get_node(&build_dependency).unwrap();
+                let reference = match node.project.checkout.clone() {
+                    Some(value) => value,
+                    None => "".to_string(),
+                };
+                // For every key in the hashset, get the associated Node (Name + Version) => Put it into the list
+                let dependencies: Vec<Dependency> = get_dependency_packages(Arc::clone(&graph), &build_dependency);
+
+                let environment: Environment = Environment::new(&module_name, &version);
+
+                let PackageDestination::Git(package_destination) = &replication_manifest.destination_template;
+                let package_destination_url: String = environment.apply(&package_destination.git);
+                let package_destination_reference: String = environment.apply(&package_destination.reference);
+
+
+                let package: Package = Package::new(
+                    PackageOriginGit::new(
+                        node.project.repository.clone(),
+                        reference
+                    ),
+                    PackageDestinationGit::new(
+                        package_destination_url,
+                        package_destination_reference,
+                    ),
+                    dependencies,
+                    !origin.git.clone().replace("/", "-").replace(".", "-").ends_with(&environment.name));
+                packages.push(package);
+            }
+            let replication_plan: ReplicationPlan = ReplicationPlan::new(
+                replication_manifest.project,
+                replication_manifest.hooks,
+                packages,
+                replication_manifest.config
+            );
+            Ok(replication_plan)
+        },
+        PackageOrigin::GoCache(_origin) => { todo!() },
+    }
+}
+
+fn get_dependency_packages(graph: Arc<Graph<DependencyTreeNodeGo>>, build_dependency: &str) -> Vec<Dependency> {
+    let mut ret = Vec::new();
+    let dependencies_hash = match graph.get_edges(&build_dependency) {
+        Some(hash) => hash,
+        None => {
+            HashSet::new()
+        }
+    };
+
+    dependencies_hash.iter().for_each(|dep| {
+        let node = graph.get_node(&dep).unwrap();
+        ret.push(Dependency {
+            name: node.project.name,
+            version: node.project.version
+        })
+    });
+    ret
+}
+
+
+
+
+
 
 pub fn plan_replication() -> Result<ReplicationPlan> {
     let replication_manifest: ReplicationManifest = read_yaml_file("replication.yaml")?;
@@ -54,7 +126,7 @@ pub fn plan_replication() -> Result<ReplicationPlan> {
             top_level.run_shell("go mod download all".to_string())?;
 
             let mut packages: Vec<Package> = Vec::new();
-
+            //
             let dependency_tree: DependencyTreeNode = find_dependency_tree(
                 DependencyTreeRequest::from_git_project(
                     origin.git.clone(),
@@ -67,7 +139,7 @@ pub fn plan_replication() -> Result<ReplicationPlan> {
                     "go list -json -m all | jq -s".to_string()
                 )?.as_str()
             )?;
-
+            //
             if let Value::Array(build_dependencies) = build_dependencies {
                 for build_dependency in build_dependencies {
                     if let Value::Object(build_dependency) = build_dependency {

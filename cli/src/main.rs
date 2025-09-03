@@ -2,9 +2,11 @@ use std::{env, path::PathBuf, sync::Arc};
 
 use clap::{Parser, Subcommand};
 use commands::dependencies::DependenciesArgs;
+use source_wand_common::utils::read_yaml_file::read_yaml_file;
 use source_wand_dependency_analysis::dependency_tree_generators::{go_dependency_tree_generator_andrew::parse_dependency, go_depenendency_tree_struct::Graph};
+use source_wand_replication::model::replication_manifest::ReplicationManifest;
 
-use crate::commands::replication::ReplicationArgs;
+use crate::commands::replication::{init::{replicate_init_command, ReplicationInitArgs}, plan::replication_plan_andrew_go, ReplicationArgs};
 
 mod commands;
 
@@ -37,8 +39,20 @@ fn main() {
         "{}/source-wand-projects/", std::env::var("HOME").unwrap()
     });
     let module_name: String = "github.com/canonical/chisel".to_string();
-    let graph = Arc::new(Graph::new());
-    parse_dependency(&url, &version, &project_root, &module_name, Arc::clone(&graph)); 
-    graph.print_graph();
-    println!("Final map size: {}", graph.nodes.len());
+    //let graph = Arc::new(Graph::new());
+    //parse_dependency(&url, &version, &project_root, &module_name, Arc::clone(&graph)); 
+    //graph.print_graph();
+    //println!("Final map size: {}", graph.nodes.len());
+    //println!("{:#?}", graph.get_node_list());
+
+    let replication_args = ReplicationInitArgs {};
+
+    let _ = replicate_init_command(&replication_args);
+
+    // Replication Plan Andrew Go
+    let rep_plan = replication_plan_andrew_go(&url, &version, &project_root, &module_name).unwrap();
+    println!("{:#?}", rep_plan);
+
+
+
 }

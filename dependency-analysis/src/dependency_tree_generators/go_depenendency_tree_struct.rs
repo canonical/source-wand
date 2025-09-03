@@ -50,11 +50,13 @@ pub struct Graph<T> {
     pub edges: Arc<DashMap<String, HashSet<String>>>,
 }
 
-impl<T> Graph<T> {
+impl<T: Clone> Graph<T> {
     pub fn new() -> Self {
         Graph {
             nodes: Arc::new(DashMap::new()),
             edges: Arc::new(DashMap::new()),
+            // Key: Parent Node + Version
+            // Value: HashSet (Strings)
         }
     }
 
@@ -71,6 +73,19 @@ impl<T> Graph<T> {
             .or_insert_with(HashSet::new)
             .insert(child.to_string());
     }
+
+    pub fn get_node_list(&self) -> Vec<String> {
+        self.nodes.iter().map(|entry| entry.key().clone()).collect()
+    }
+
+    pub fn get_node(&self, key: &str) -> Option<T> {
+        self.nodes.get(key).map(|node_ref| node_ref.value().clone())
+    }
+
+    pub fn get_edges(&self, key: &str) -> Option<HashSet<String>> {
+        self.edges.get(key).map(|edge_ref| edge_ref.value().clone())
+    }
+
 
     pub fn print_dependencies(&self) {
         println!("Project Dependencies:");

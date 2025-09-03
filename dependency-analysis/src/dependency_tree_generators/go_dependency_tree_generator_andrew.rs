@@ -12,10 +12,10 @@ use rayon::prelude::*; // 1. Import Rayon's parallel iterator traits
 
 
 pub fn parse_dependency<'a>(
-    url: &'a String,
-    version: &'a String,
-    project_root: &'a PathBuf,
-    module_name: &'a String,
+    url: & String,
+    version: & String,
+    project_root: & PathBuf,
+    module_name: & String,
     graph: Arc<Graph<DependencyTreeNodeGo>>,
 ) {
     ///////////////////////// PRINT ///////////////////////////
@@ -125,10 +125,11 @@ pub fn parse_dependency<'a>(
                     });
                     requires.par_iter().for_each(|dep| {
                         let child = dep.path.clone();
+                        let child_version = dep.version.clone();
                         println!("## Parent: {} | Child: {}", &parent, &child);
                         graph.edges.entry(format!("{}-{}", parent.clone(), version.clone()))
                             .or_insert_with(HashSet::new)
-                            .insert(child.clone());
+                            .insert(format!("{}-{}", child.clone(), child_version));
                         println!("@@@@ dependency {} has dep {}", &parent, &child);
                     });
                 }
