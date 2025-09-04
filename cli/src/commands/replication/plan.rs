@@ -4,29 +4,33 @@ use anyhow::{bail, Result};
 use clap::Parser;
 use serde_json::Value;
 use source_wand_common::{
+    identity::{
+        sanitized_name::SanitizedName,
+        semantic_version::SemanticVersion,
+    },
     project_manipulator::{
         local_project_manipulator::LocalProjectManipulator,
-        project_manipulator::ProjectManipulator
+        project_manipulator::ProjectManipulator,
     },
-    utils::{
-        read_yaml_file::read_yaml_file
-    }
+    utils::read_yaml_file::read_yaml_file,
 };
 use source_wand_dependency_analysis::{
     dependency_tree_node::DependencyTreeNode,
     dependency_tree_request::DependencyTreeRequest,
-    find_dependency_tree
+    find_dependency_tree,
 };
-use source_wand_replication::{model::{
-    dependency::Dependency,
-    package::Package,
-    package_destination::PackageDestination,
-    package_destination_git::PackageDestinationGit,
-    package_origin::PackageOrigin,
-    package_origin_go_cache::PackageOriginGoCache,
-    replication_manifest::ReplicationManifest,
-    replication_plan::ReplicationPlan
-}, plan::environment::Environment};
+use source_wand_replication::{
+    model::{
+        dependency::Dependency,
+        package::Package,
+        package_destination::PackageDestination,
+        package_destination_git::PackageDestinationGit,
+        package_origin::PackageOrigin,
+        package_origin_go_cache::PackageOriginGoCache,
+        replication_manifest::ReplicationManifest,
+        replication_plan::ReplicationPlan,
+    }
+};
 use uuid::Uuid;
 
 #[derive(Debug, Parser)]
@@ -170,11 +174,16 @@ pub fn plan_replication() -> Result<ReplicationPlan> {
                             .unwrap_or_default()
                             .to_string();
 
-                        let environment: Environment = Environment::new(&name, &version);
+                        let sanitized_name: SanitizedName = SanitizedName::new(&name);
+                        let semantic_version: SemanticVersion = SemanticVersion::new(&version);
 
                         let PackageDestination::Git(package_destination) = &replication_manifest.destination_template;
-                        let package_destination_url: String = environment.apply(&package_destination.git);
-                        let package_destination_reference: String = environment.apply(&package_destination.reference);
+
+                        let package_destination_url: String = sanitized_name.apply(&package_destination.git);
+                        let package_destination_url: String = semantic_version.apply(&package_destination_url);
+
+                        let package_destination_reference: String = sanitized_name.apply(&package_destination.reference);
+                        let package_destination_reference: String = semantic_version.apply(&package_destination_reference);
 
                         let dependencies: Vec<Dependency> = find_dependencies_for_package(
                             dependency_tree.clone(),
@@ -183,8 +192,8 @@ pub fn plan_replication() -> Result<ReplicationPlan> {
 
                         let package: Package = Package::new(
                             PackageOriginGoCache::new(
-                                environment.name.clone(),
-                                environment.version.clone(),
+                                sanitized_name.value.clone(),
+                                semantic_version.version.clone(),
                                 cache_path
                             ),
                             PackageDestinationGit::new(
@@ -192,13 +201,17 @@ pub fn plan_replication() -> Result<ReplicationPlan> {
                                 package_destination_reference,
                             ),
                             dependencies,
-                            !origin.git.clone().replace("/", "-").replace(".", "-").ends_with(&environment.name)
+                            !origin.git.clone()
+                                .replace("/", "-")
+                                .replace(".", "-")
+                                .ends_with(&sanitized_name.value)
                         );
 
                         packages.push(package);
                     }
                 }
             }
+
             top_level.cleanup();
 
             let replication_plan: ReplicationPlan = ReplicationPlan::new(
@@ -227,17 +240,14 @@ fn find_dependencies_for_package(root: Arc<Mutex<DependencyTreeNode>>, package_n
         return dependencies
             .iter()
             .map(|dep| {
-                let environment: Environment = {
-                    let dep_guard: MutexGuard<'_, DependencyTreeNode> = dep.lock().unwrap();
-                    Environment::new(
-                        &dep_guard.project.name, 
-                        &dep_guard.project.version,
-                    )
-                };
+                let dep_guard: MutexGuard<'_, DependencyTreeNode> = dep.lock().unwrap();
+
+                let sanitized_name: SanitizedName = SanitizedName::new(&dep_guard.project.name);
+                let semantic_version: SemanticVersion = SemanticVersion::new(&dep_guard.project.version);
 
                 Dependency {
-                    name: environment.name.replace("/", "-").replace(".", "-"),
-                    version: format!("{}-24.04", environment.version_retrocompatible),
+                    name: sanitized_name.value.replace("/", "-").replace(".", "-"),
+                    version: format!("{}-24.04", semantic_version.version_retrocompatible),
                 }
             })
             .collect();

@@ -1,5 +1,9 @@
 use std::sync::Arc;
 
+use source_wand_common::identity::{
+    sanitized_name::SanitizedName,
+    semantic_version::SemanticVersion
+};
 use source_wand_concurrent_executor::{
     execution_graph_builder::{
         ExecutionGraphBuilder,
@@ -15,7 +19,6 @@ use crate::{
         replication_plan::ReplicationPlan
     },
     plan::{
-        environment::Environment,
         transformations::{
             git::{
                 git_init::GitInit,
@@ -36,8 +39,14 @@ impl ReplicationPlan {
             if let PackageOrigin::GoCache(origin) = &package.origin {
                 let PackageDestination::Git(destination) = &package.destination;
 
-                let environment: Environment = Environment::new(&origin.name, &origin.version);
-                let workdesk: String = format!("{} ({}-24.04/edge)", environment.name, environment.version_retrocompatible);
+                let sanitized_name: SanitizedName = SanitizedName::new(&origin.name);
+                let semantic_version: SemanticVersion = SemanticVersion::new(&origin.version);
+
+                let workdesk: String = format!(
+                    "{} ({}-24.04/edge)",
+                    sanitized_name.value,
+                    semantic_version.version_retrocompatible
+                );
 
                 let mut initialize_project: RcExecutionNodeBuilder = execution_graph_builder.create_node(
                     workdesk.clone(),
@@ -72,8 +81,8 @@ impl ReplicationPlan {
                     workdesk.clone(),
                     Arc::new(
                         SourcecraftInitialize::new(
-                            environment.name.clone(),
-                            format!("{}-24.04", environment.version_retrocompatible.clone()),
+                            sanitized_name.value.clone(),
+                            format!("{}-24.04", semantic_version.version_retrocompatible.clone()),
                             "ubuntu@24.04".to_string(),
                             vec!["amd64".to_string()],
                             package.dependencies.clone(),
