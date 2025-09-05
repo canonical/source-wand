@@ -39,13 +39,13 @@ impl ReplicationPlan {
             if let PackageOrigin::GoCache(origin) = &package.origin {
                 let PackageDestination::Git(destination) = &package.destination;
 
-                let sanitized_name: SanitizedName = SanitizedName::new(&origin.name);
-                let semantic_version: SemanticVersion = SemanticVersion::new(&origin.version);
+                let name: SanitizedName = SanitizedName::new(&origin.name);
+                let version: SemanticVersion = SemanticVersion::new(&origin.version);
 
                 let workdesk: String = format!(
                     "{} ({}-24.04/edge)",
-                    sanitized_name.value,
-                    semantic_version.retrocompatible
+                    name.sanitized,
+                    version.retrocompatible
                 );
 
                 let mut initialize_project: RcExecutionNodeBuilder = execution_graph_builder.create_node(
@@ -81,8 +81,8 @@ impl ReplicationPlan {
                     workdesk.clone(),
                     Arc::new(
                         SourcecraftInitialize::new(
-                            sanitized_name.value.clone(),
-                            format!("{}-24.04", semantic_version.retrocompatible.clone()),
+                            name.sanitized.clone(),
+                            format!("{}-24.04", version.retrocompatible.clone()),
                             "ubuntu@24.04".to_string(),
                             vec!["amd64".to_string()],
                             package.dependencies.clone(),

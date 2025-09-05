@@ -179,26 +179,26 @@ pub fn plan_replication() -> Result<ReplicationPlan> {
                             .unwrap_or_default()
                             .to_string();
 
-                        let sanitized_name: SanitizedName = SanitizedName::new(&name);
-                        let semantic_version: SemanticVersion = SemanticVersion::new(&version);
+                        let name: SanitizedName = SanitizedName::new(&name);
+                        let version: SemanticVersion = SemanticVersion::new(&version);
 
                         let PackageDestination::Git(package_destination) = &replication_manifest.destination_template;
 
-                        let package_destination_url: String = sanitized_name.apply(&package_destination.git);
-                        let package_destination_url: String = semantic_version.apply(&package_destination_url);
+                        let package_destination_url: String = name.apply(&package_destination.git);
+                        let package_destination_url: String = version.apply(&package_destination_url);
 
-                        let package_destination_reference: String = sanitized_name.apply(&package_destination.reference);
-                        let package_destination_reference: String = semantic_version.apply(&package_destination_reference);
+                        let package_destination_reference: String = name.apply(&package_destination.reference);
+                        let package_destination_reference: String = version.apply(&package_destination_reference);
 
                         let dependencies: Vec<Dependency> = find_dependencies_for_package(
                             dependency_tree.clone(),
-                            &name,
+                            &name.original,
                         );
 
                         let package: Package = Package::new(
                             PackageOriginGoCache::new(
-                                sanitized_name.value.clone(),
-                                semantic_version.raw.clone(),
+                                name.sanitized.clone(),
+                                version.raw.clone(),
                                 cache_path
                             ),
                             PackageDestinationGit::new(
@@ -209,7 +209,7 @@ pub fn plan_replication() -> Result<ReplicationPlan> {
                             !origin.git.clone()
                                 .replace("/", "-")
                                 .replace(".", "-")
-                                .ends_with(&sanitized_name.value)
+                                .ends_with(&name.sanitized)
                         );
 
                         packages.push(package);
@@ -247,12 +247,12 @@ fn find_dependencies_for_package(root: Arc<Mutex<DependencyTreeNode>>, package_n
             .map(|dep| {
                 let dep_guard: MutexGuard<'_, DependencyTreeNode> = dep.lock().unwrap();
 
-                let sanitized_name: SanitizedName = SanitizedName::new(&dep_guard.project.name);
-                let semantic_version: SemanticVersion = SemanticVersion::new(&dep_guard.project.version);
+                let name: SanitizedName = SanitizedName::new(&dep_guard.project.name);
+                let version: SemanticVersion = SemanticVersion::new(&dep_guard.project.version);
 
                 Dependency {
-                    name: sanitized_name.value.replace("/", "-").replace(".", "-"),
-                    version: format!("{}-24.04", semantic_version.retrocompatible),
+                    name: name.sanitized.replace("/", "-").replace(".", "-"),
+                    version: format!("{}-24.04", version.retrocompatible),
                 }
             })
             .collect();

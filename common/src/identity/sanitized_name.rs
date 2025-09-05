@@ -1,6 +1,7 @@
 #[readonly::make]
 pub struct SanitizedName {
-    pub value: String,
+    pub original: String,
+    pub sanitized: String,
 }
 
 impl SanitizedName {
@@ -50,11 +51,14 @@ impl SanitizedName {
             }
         }
 
-        SanitizedName { value: sanitized_name }
+        SanitizedName {
+            original: original_name.clone(),
+            sanitized: sanitized_name,
+        }
     }
 
     pub fn apply(&self, template: &String) -> String {
         template
-            .replace("$NAME", &self.value)
+            .replace("$NAME", &self.sanitized)
     }
 }
