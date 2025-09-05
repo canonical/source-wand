@@ -45,7 +45,7 @@ impl ReplicationPlan {
                 let workdesk: String = format!(
                     "{} ({}-24.04/edge)",
                     sanitized_name.value,
-                    semantic_version.version_retrocompatible
+                    semantic_version.retrocompatible
                 );
 
                 let mut initialize_project: RcExecutionNodeBuilder = execution_graph_builder.create_node(
@@ -82,7 +82,7 @@ impl ReplicationPlan {
                     Arc::new(
                         SourcecraftInitialize::new(
                             sanitized_name.value.clone(),
-                            format!("{}-24.04", semantic_version.version_retrocompatible.clone()),
+                            format!("{}-24.04", semantic_version.retrocompatible.clone()),
                             "ubuntu@24.04".to_string(),
                             vec!["amd64".to_string()],
                             package.dependencies.clone(),

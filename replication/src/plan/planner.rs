@@ -10,6 +10,7 @@ use std::{
 };
 
 use anyhow::{bail, Result};
+use colorize::AnsiColor;
 use serde_json::Value;
 use source_wand_common::{
     identity::{
@@ -41,6 +42,11 @@ use crate::model::{
 };
 
 pub fn plan_replication() -> Result<ReplicationPlan> {
+    println!(
+        "{} analyzing the origin project's dependency tree",
+        "[plan]".green(),
+    );
+
     let replication_manifest: ReplicationManifest = read_yaml_file("replication.yaml")?;
 
     match replication_manifest.origin {
@@ -192,7 +198,7 @@ pub fn plan_replication() -> Result<ReplicationPlan> {
                         let package: Package = Package::new(
                             PackageOriginGoCache::new(
                                 sanitized_name.value.clone(),
-                                semantic_version.version.clone(),
+                                semantic_version.raw.clone(),
                                 cache_path
                             ),
                             PackageDestinationGit::new(
@@ -246,7 +252,7 @@ fn find_dependencies_for_package(root: Arc<Mutex<DependencyTreeNode>>, package_n
 
                 Dependency {
                     name: sanitized_name.value.replace("/", "-").replace(".", "-"),
-                    version: format!("{}-24.04", semantic_version.version_retrocompatible),
+                    version: format!("{}-24.04", semantic_version.retrocompatible),
                 }
             })
             .collect();

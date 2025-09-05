@@ -2,12 +2,12 @@ use regex::Regex;
 
 #[readonly::make]
 pub struct SemanticVersion {
-    pub version: String,
-    pub version_major: String,
-    pub version_minor: String,
-    pub version_patch: String,
-    pub version_suffix: String,
-    pub version_retrocompatible: String,
+    pub raw: String,
+    pub major: String,
+    pub minor: String,
+    pub patch: String,
+    pub suffix: String,
+    pub retrocompatible: String,
 }
 
 impl SemanticVersion {
@@ -59,22 +59,22 @@ impl SemanticVersion {
         };
 
         SemanticVersion {
-            version: original_version.clone(),
-            version_major: major,
-            version_minor: minor,
-            version_patch: patch,
-            version_suffix: suffix,
-            version_retrocompatible: retrocompatible,
+            raw: original_version.clone(),
+            major,
+            minor,
+            patch,
+            suffix,
+            retrocompatible,
         }
     }
 
     pub fn apply(&self, template: &String) -> String {
         template
-            .replace("$VERSION_MAJOR", &self.version_major)
-            .replace("$VERSION_MINOR", &self.version_minor)
-            .replace("$VERSION_PATCH", &self.version_patch)
-            .replace("$VERSION_SUFFIX", &self.version_suffix)
-            .replace("$VERSION_RETROCOMPATIBLE", &self.version_retrocompatible)
-            .replace("$VERSION", &self.version)
+            .replace("$VERSION_MAJOR", &self.major)
+            .replace("$VERSION_MINOR", &self.minor)
+            .replace("$VERSION_PATCH", &self.patch)
+            .replace("$VERSION_SUFFIX", &self.suffix)
+            .replace("$VERSION_RETROCOMPATIBLE", &self.retrocompatible)
+            .replace("$VERSION", &self.raw)
     }
 }
