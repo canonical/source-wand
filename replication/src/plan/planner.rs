@@ -56,7 +56,7 @@ pub fn plan_replication() -> Result<ReplicationPlan> {
             create_dir_all(&top_level_directory)?;
     
             let top_level: LocalProjectManipulator = LocalProjectManipulator::new(top_level_directory, true);
-    
+
             top_level.run_shell(format!("git clone {} .", origin.git))?;
             top_level.run_shell(format!("git checkout {}", origin.reference))?;
 

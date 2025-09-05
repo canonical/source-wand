@@ -1,3 +1,4 @@
+use std::fs;
 use std::{fs::File, path::PathBuf};
 use std::io::{Write, BufWriter};
 use anyhow::{bail, Result};
@@ -48,24 +49,27 @@ pub fn replicate_plan_command(args: &PlanArgs) -> Result<()> {
     );
 
     for package in &plan.packages {
-        println!();
-        let (name, version) = match &package.origin {
+        let (
+                name,
+                version,
+                source,
+        ) = match &package.origin {
             PackageOrigin::Git(origin) => {
                 let name: SanitizedName = SanitizedName::new(&origin.git);
                 let version: SemanticVersion = SemanticVersion::new(&origin.reference);
 
-                (name, version)
+                (name, version, origin.git.clone())
             },
             PackageOrigin::GoCache(origin) => {
                 let name: SanitizedName = SanitizedName::new(&origin.name);
                 let version: SemanticVersion = SemanticVersion::new(&origin.version);
 
-                (name, version)
+                (name, version, origin.upstream.clone())
             },
         };
 
         println!(
-            "{} package: {}",
+            "\n{} package: {}",
             "[plan]".green(),
             name.sanitized.clone().italic(),
         );
@@ -81,10 +85,16 @@ pub fn replicate_plan_command(args: &PlanArgs) -> Result<()> {
             "[plan]".green(),
             format!("{}-24.04/edge", version.retrocompatible).to_string().italic(),
         );
+
+        println!(
+            "{} source: {}",
+            "[plan]".green(),
+            source.italic(),
+        );
     }
 
     if let Some(export_path) = export_path {
-        let file: File = File::create(export_path)?;
+        let file: File = File::create(&export_path)?;
         let mut writer: BufWriter<File> = BufWriter::new(file);
 
         writeln!(writer, "package,version,track,source")?;
