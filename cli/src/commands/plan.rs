@@ -105,7 +105,7 @@ pub fn replicate_plan_command(args: &PlanArgs) -> Result<()> {
                     let name: SanitizedName = SanitizedName::new(&origin.name);
                     let version: SemanticVersion = SemanticVersion::new(&origin.version);
 
-                    (name, version, origin.path.clone())
+                    (name, version, origin.upstream.clone())
                 },
             };
 

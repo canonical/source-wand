@@ -179,6 +179,12 @@ pub fn plan_replication() -> Result<ReplicationPlan> {
                             .unwrap_or_default()
                             .to_string();
 
+                        let upstream: String = build_dependency.get("Path")
+                            .unwrap()
+                            .as_str()
+                            .unwrap_or_default()
+                            .to_string();
+
                         let name: SanitizedName = SanitizedName::new(&name);
                         let version: SemanticVersion = SemanticVersion::new(&version);
 
@@ -199,7 +205,8 @@ pub fn plan_replication() -> Result<ReplicationPlan> {
                             PackageOriginGoCache::new(
                                 name.sanitized.clone(),
                                 version.raw.clone(),
-                                cache_path
+                                cache_path,
+                                upstream,
                             ),
                             PackageDestinationGit::new(
                                 package_destination_url,
