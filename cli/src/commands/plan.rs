@@ -128,6 +128,13 @@ pub fn replicate_plan_command(args: &PlanArgs) -> Result<()> {
                 source,
             )?;
         }
+
+        println!(
+            "\n{} {} {}",
+            "[execute]".green(),
+            "exported analysis to CSV file".blue(),
+            fs::canonicalize(export_path)?.as_os_str().to_str().unwrap().to_string().italic(),
+        );
     }
 
     Ok(())
