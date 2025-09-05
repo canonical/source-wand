@@ -7,7 +7,20 @@ use commands::{
     }
 };
 
-use crate::commands::replication::{replicate_command, ReplicationArgs};
+use crate::commands::{
+    apply::{
+        replicate_apply_command,
+        ApplyArgs
+    },
+    init::{
+        replicate_init_command,
+        InitArgs
+    },
+    plan::{
+        replicate_plan_command,
+        PlanArgs
+    },
+};
 
 mod commands;
 
@@ -22,13 +35,21 @@ enum Command {
     #[command(about = "Find the dependency tree of a project.")]
     Dependencies(DependenciesArgs),
 
-    #[command(about = "Replicate a project along with its dependencies")]
-    Replication(ReplicationArgs)
+    #[command(about = "Initialize a new deep replication project")]
+    Init(InitArgs),
+
+    #[command(about = "Plan a deep replication and validate the replication is possible")]
+    Plan(PlanArgs),
+
+    #[command(about = "Apply the deep replication plan")]
+    Apply(ApplyArgs),
 }
 
 fn main() -> Result<()> {
     match Cli::parse().command {
         Command::Dependencies(args) => dependencies_command(&args),
-        Command::Replication(args) => replicate_command(&args),
+        Command::Init(args) => replicate_init_command(&args),
+        Command::Plan(args) => replicate_plan_command(&args),
+        Command::Apply(args) => replicate_apply_command(&args),
     }
 }

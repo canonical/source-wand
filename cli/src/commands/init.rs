@@ -3,12 +3,17 @@ use std::{env, path::PathBuf};
 use anyhow::Result;
 use clap::Parser;
 use source_wand_common::utils::write_yaml_file::write_yaml_file;
-use source_wand_replication::model::{hooks::Hooks, package_destination_git::PackageDestinationGit, package_origin_git::PackageOriginGit, replication_manifest::ReplicationManifest};
+use source_wand_replication::model::{
+    hooks::Hooks,
+    package_destination_git::PackageDestinationGit,
+    package_origin_git::PackageOriginGit,
+    replication_manifest::ReplicationManifest
+};
 
 #[derive(Debug, Parser)]
-pub struct ReplicationInitArgs;
+pub struct InitArgs;
 
-pub fn replicate_init_command(_args: &ReplicationInitArgs) -> Result<()> {
+pub fn replicate_init_command(_args: &InitArgs) -> Result<()> {
     let working_directory: PathBuf = env::current_dir()?;
     let project_name = working_directory
         .file_name()

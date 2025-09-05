@@ -1,45 +1,44 @@
-use std::{collections::HashSet, fs::create_dir_all, path::PathBuf, sync::{Arc, Mutex, MutexGuard}};
+use std::{
+    collections::HashSet,
+    fs::create_dir_all,
+    path::PathBuf,
+    sync::{
+        Arc,
+        Mutex,
+        MutexGuard
+    }
+};
 
 use anyhow::{bail, Result};
-use clap::Parser;
 use serde_json::Value;
 use source_wand_common::{
     identity::{
         sanitized_name::SanitizedName,
-        semantic_version::SemanticVersion,
+        semantic_version::SemanticVersion
     },
     project_manipulator::{
         local_project_manipulator::LocalProjectManipulator,
-        project_manipulator::ProjectManipulator,
+        project_manipulator::ProjectManipulator
     },
-    utils::read_yaml_file::read_yaml_file,
+    utils::read_yaml_file::read_yaml_file
 };
 use source_wand_dependency_analysis::{
     dependency_tree_node::DependencyTreeNode,
     dependency_tree_request::DependencyTreeRequest,
-    find_dependency_tree,
-};
-use source_wand_replication::{
-    model::{
-        dependency::Dependency,
-        package::Package,
-        package_destination::PackageDestination,
-        package_destination_git::PackageDestinationGit,
-        package_origin::PackageOrigin,
-        package_origin_go_cache::PackageOriginGoCache,
-        replication_manifest::ReplicationManifest,
-        replication_plan::ReplicationPlan,
-    }
+    find_dependency_tree
 };
 use uuid::Uuid;
 
-#[derive(Debug, Parser)]
-pub struct ReplicationPlanArgs;
-
-pub fn replicate_plan_command(_args: &ReplicationPlanArgs) -> Result<()> {
-    plan_replication()?;
-    Ok(())
-}
+use crate::model::{
+    dependency::Dependency,
+    package::Package,
+    package_destination::PackageDestination,
+    package_destination_git::PackageDestinationGit,
+    package_origin::PackageOrigin,
+    package_origin_go_cache::PackageOriginGoCache,
+    replication_manifest::ReplicationManifest,
+    replication_plan::ReplicationPlan
+};
 
 pub fn plan_replication() -> Result<ReplicationPlan> {
     let replication_manifest: ReplicationManifest = read_yaml_file("replication.yaml")?;
