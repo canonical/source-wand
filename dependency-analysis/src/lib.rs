@@ -28,7 +28,12 @@ pub mod build_systems;
 pub mod dependency_tree_generators;
 pub mod build_requirements_generator;
 
-pub fn find_dependency_tree(request: DependencyTreeRequest) -> Result<DependencyTreeNode> {
+pub fn find_dependency_tree(request: DependencyTreeRequest) -> Result<Arc<Mutex<DependencyTreeNode>>> {
+    let project_root: PathBuf = PathBuf::from(format!(
+        "{}/source-wand-projects/{}",
+        std::env::var("HOME")?,
+        Uuid::new_v4().to_string()
+    ));
     let project_manipulator: AnyProjectManipulator = match request {
         DependencyTreeRequest::LocalProject { path } => {
             LocalProjectManipulator::new(path, false).to_any()
@@ -56,7 +61,7 @@ pub fn find_dependency_tree(request: DependencyTreeRequest) -> Result<Dependency
     // let dependencies: Vec<AnyRequiredDependency> = build_system.get_required_dependencies();
     // project_manipulator.ensure_dependencies(dependencies)?;
 
-    let dependency_tree: Result<DependencyTreeNode> = generate_dependency_tree(build_system, &project_manipulator);
+    let dependency_tree: Result<Arc<Mutex<DependencyTreeNode>>> = generate_dependency_tree(build_system, &project_manipulator);
     project_manipulator.cleanup();
 
     dependency_tree

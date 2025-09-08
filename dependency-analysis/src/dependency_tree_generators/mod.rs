@@ -1,8 +1,5 @@
-<<<<<<< HEAD
 use std::sync::{Arc, Mutex};
-=======
 use std::path::PathBuf;
->>>>>>> 516fbe8 (Can create a Graph)
 
 use anyhow::Result;
 use source_wand_common::{project, project_manipulator::project_manipulator::AnyProjectManipulator};
@@ -24,14 +21,8 @@ pub mod cdxgen_dependency_tree_generator;
 
 pub fn generate_dependency_tree(
     build_system: BuildSystemIdentity,
-<<<<<<< HEAD
     project_manipulator: &AnyProjectManipulator
 ) -> Result<Arc<Mutex<DependencyTreeNode>>> {
-=======
-    project_manipulator: &AnyProjectManipulator,
-    //project_root: &PathBuf
-) -> Result<DependencyTreeNode> {
->>>>>>> 516fbe8 (Can create a Graph)
     match build_system {
         BuildSystemIdentity::RustCargo => {
             generate_cdxgen_dependency_tree(project_manipulator, Some("rust"))
@@ -43,10 +34,6 @@ pub fn generate_dependency_tree(
             generate_cdxgen_dependency_tree(project_manipulator, Some("java"))
         },
         BuildSystemIdentity::Go => {
-<<<<<<< HEAD
-=======
-            //generate_cdxgen_dependency_tree(project_manipulator, Some("go"))
->>>>>>> 516fbe8 (Can create a Graph)
             generate_go_dependency_tree(project_manipulator)
         },
         BuildSystemIdentity::Unknown => {
