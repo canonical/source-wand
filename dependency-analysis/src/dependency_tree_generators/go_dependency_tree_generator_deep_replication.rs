@@ -1,4 +1,4 @@
-use std::{collections::{HashMap, HashSet}, fs, path::PathBuf, str::FromStr, sync::Arc};
+use std::{collections::{HashMap, HashSet}, fs, path::PathBuf, str::FromStr, sync::{Arc, Mutex}};
 use anyhow::Result;
 use reqwest::blocking::{get, Response};
 use scraper::{Html, Selector};
@@ -9,6 +9,29 @@ use serde::{Deserialize};
 use uuid::Uuid;
 use crate::{dependency_tree_generators::dependency_tree_graph::{Graph}, dependency_tree_node::DependencyTreeNode};
 use rayon::prelude::*; // 1. Import Rayon's parallel iterator traits
+
+
+pub fn generate_go_dependency_tree(
+    project_manipulator: &dyn ProjectManipulator,
+) -> Result<Arc<Mutex<DependencyTreeNode>>> {
+    // URL
+    // Version
+    // Project Root
+    let project_root: PathBuf = PathBuf::from(format!(
+        "{}/source-wand-projects/{}",
+        std::env::var("HOME")?,
+        Uuid::new_v4().to_string()
+    ));
+
+    // Module Name >> Find in 
+
+
+
+
+
+}
+
+
 
 
 pub fn parse_dependency<'a>(

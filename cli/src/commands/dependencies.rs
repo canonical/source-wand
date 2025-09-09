@@ -24,9 +24,6 @@ pub struct DependenciesArgs {
 
     #[arg(long, action = ArgAction::SetTrue)]
     minimal_build_requirements: bool,
-
-    #[arg(long, action = ArgAction::SetTrue)]
-    sourcecraft_replication: bool,
 }
 
 #[derive(Debug, Subcommand)]
@@ -89,78 +86,80 @@ impl Serialize for OutputData {
 }
 
 pub fn dependencies_command(args: &DependenciesArgs) -> Result<()> {
-    if args.sourcecraft_replication {
+    // If it's local >> Path (No URL, Version)
+    // If it's Git >> URL, Branch
 
-    } else {
-        let dependency_tree = match &args.command {
+
+
+
+    let dependency_tree = match &args.command {
+        DependenciesCommand::Local(args) => {
+            find_dependency_tree(
+                DependencyTreeRequest::LocalProject {
+                    path: args.path.clone()
+                }
+            ).map_err(|e| Error::msg(e))?
+        },
+        DependenciesCommand::Git(args) => {
+            find_dependency_tree(
+                DependencyTreeRequest::GitProject {
+                    url: args.url.clone(),
+                    branch: args.branch.clone(),
+                }
+            ).map_err(|e| Error::msg(e))?
+        },
+        DependenciesCommand::ByName(args) => {
+            find_dependency_tree(
+                DependencyTreeRequest::NameBased {
+                    name: args.name.clone(),
+                    version: args.version.clone(),
+                }
+            ).map_err(|e| Error::msg(e))?
+        },
+    };
+
+    let output_data: OutputData = if args.minimal_build_requirements {
+        OutputData::List(match &args.command {
             DependenciesCommand::Local(args) => {
-                find_dependency_tree(
+                find_build_requirements(
                     DependencyTreeRequest::LocalProject {
                         path: args.path.clone()
-                    }
+                    },
+                    dependency_tree.clone(),
                 ).map_err(|e| Error::msg(e))?
             },
             DependenciesCommand::Git(args) => {
-                find_dependency_tree(
+                find_build_requirements(
                     DependencyTreeRequest::GitProject {
                         url: args.url.clone(),
                         branch: args.branch.clone(),
-                    }
+                    },
+                    dependency_tree.clone(),
                 ).map_err(|e| Error::msg(e))?
             },
             DependenciesCommand::ByName(args) => {
-                find_dependency_tree(
+                find_build_requirements(
                     DependencyTreeRequest::NameBased {
                         name: args.name.clone(),
                         version: args.version.clone(),
-                    }
+                    },
+                    dependency_tree.clone(),
                 ).map_err(|e| Error::msg(e))?
             },
-        };
-
-        let output_data: OutputData = if args.minimal_build_requirements {
-            OutputData::List(match &args.command {
-                DependenciesCommand::Local(args) => {
-                    find_build_requirements(
-                        DependencyTreeRequest::LocalProject {
-                            path: args.path.clone()
-                        },
-                        dependency_tree.clone(),
-                    ).map_err(|e| Error::msg(e))?
-                },
-                DependenciesCommand::Git(args) => {
-                    find_build_requirements(
-                        DependencyTreeRequest::GitProject {
-                            url: args.url.clone(),
-                            branch: args.branch.clone(),
-                        },
-                        dependency_tree.clone(),
-                    ).map_err(|e| Error::msg(e))?
-                },
-                DependenciesCommand::ByName(args) => {
-                    find_build_requirements(
-                        DependencyTreeRequest::NameBased {
-                            name: args.name.clone(),
-                            version: args.version.clone(),
-                        },
-                        dependency_tree.clone(),
-                    ).map_err(|e| Error::msg(e))?
-                },
-            })
-        }
-        else if args.flatten {
-            OutputData::Tree(dependency_tree)
-        }
-        else {
-            OutputData::List(dependency_tree.lock().unwrap().flatten())
-        };
-
-        match args.format {
-            OutputFormat::Tree => println!("{}", output_data.to_string().map_err(|e| Error::msg(e))?),
-            OutputFormat::Json => println!("{}", serde_json::to_string_pretty(&output_data)?),
-            OutputFormat::Yaml => println!("{}", serde_yaml::to_string(&output_data)?),
-        }
-
+        })
     }
+    else if args.flatten {
+        OutputData::Tree(dependency_tree)
+    }
+    else {
+        OutputData::List(dependency_tree.lock().unwrap().flatten())
+    };
+
+    match args.format {
+        OutputFormat::Tree => println!("{}", output_data.to_string().map_err(|e| Error::msg(e))?),
+        OutputFormat::Json => println!("{}", serde_json::to_string_pretty(&output_data)?),
+        OutputFormat::Yaml => println!("{}", serde_yaml::to_string(&output_data)?),
+    }
+
     Ok(())
 }
