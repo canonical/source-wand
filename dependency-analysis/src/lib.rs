@@ -15,7 +15,7 @@ use source_wand_common::{
 }};
 use uuid::Uuid;
 
-use crate::{build_requirements_generator::generate_build_requirements, dependency_tree_generators::{go_depenendency_tree_struct::{DependencyTreeNodeGo, Graph}}, unique_dependencies_list::UniqueDependenciesList};
+use crate::{build_requirements_generator::generate_build_requirements, unique_dependencies_list::UniqueDependenciesList };
 
 pub mod dependency_tree_node;
 pub mod dependency_tree_map;

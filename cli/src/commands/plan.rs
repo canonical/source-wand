@@ -23,10 +23,10 @@ pub struct PlanArgs {
 }
 
 pub fn replicate_plan_command(args: &PlanArgs,
-    url: & String,
-    version: & String,
-    project_root: & PathBuf,
-    module_name: & String,
+//    url: & String,
+//    version: & String,
+//    project_root: & PathBuf,
+//    module_name: & String,
 
 ) -> Result<()> {
     let export_path: Option<PathBuf> = if let Some(output) = &args.export_csv {
@@ -47,8 +47,8 @@ pub fn replicate_plan_command(args: &PlanArgs,
     };
 
     //EDIT: Replacing Replication Plan w/ Mine
-    //let plan: ReplicationPlan = plan_replication()?;
-    let plan: ReplicationPlan = replication_plan_andrew_go(url, version, project_root, module_name).unwrap();
+    let plan: ReplicationPlan = plan_replication()?;
+    //let plan: ReplicationPlan = replication_plan_andrew_go(url, version, project_root, module_name).unwrap();
 
     println!(
         "{} {} packages were identified as required to build the project",

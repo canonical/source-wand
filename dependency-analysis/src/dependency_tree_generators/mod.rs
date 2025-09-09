@@ -14,8 +14,8 @@ pub mod rust_cargo_dependency_tree_generator;
 pub mod python_pip_dependency_tree_generator;
 pub mod java_maven_dependency_tree_generator;
 pub mod go_dependency_tree_generator;
-pub mod go_dependency_tree_generator_andrew;
-pub mod go_depenendency_tree_struct;
+pub mod go_dependency_tree_generator_deep_replication;
+pub mod dependency_tree_graph;
 
 pub mod cdxgen_dependency_tree_generator;
 

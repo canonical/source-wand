@@ -24,7 +24,7 @@ use source_wand_common::{
     utils::read_yaml_file::read_yaml_file
 };
 use source_wand_dependency_analysis::{
-    dependency_tree_generators::{go_dependency_tree_generator_andrew::parse_dependency, go_depenendency_tree_struct::Graph}, dependency_tree_node::DependencyTreeNode, dependency_tree_request::DependencyTreeRequest, find_dependency_tree
+    dependency_tree_generators::{dependency_tree_graph::Graph, go_dependency_tree_generator_deep_replication::parse_dependency}, dependency_tree_node::DependencyTreeNode, dependency_tree_request::DependencyTreeRequest, find_dependency_tree, 
 };
 use uuid::Uuid;
 
