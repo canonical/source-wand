@@ -19,6 +19,15 @@ impl DependencyTreeNode {
         }
     }
 
+    pub fn new_node(project: Project) -> Self {
+        let dependencies = Vec::new();
+        DependencyTreeNode {
+            project,
+            dependencies
+
+        }
+    }
+
     pub fn to_string(&self) -> Result<String, String> {
         let mut buffer: Vec<u8> = Vec::new();
         let mut tree: TreeBuilder = TreeBuilder::new("(Dependencies)".to_string());

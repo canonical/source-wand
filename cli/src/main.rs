@@ -8,7 +8,6 @@ use commands::{
         DependenciesArgs
     }
 };
-use source_wand_dependency_analysis::dependency_tree_generators::{go_dependency_tree_generator_andrew::parse_dependency, go_depenendency_tree_struct::{DependencyTreeNodeGo, Graph}};
 use uuid::Uuid;
 
 use crate::commands::{
@@ -71,13 +70,15 @@ fn main() {
     //println!("Final map size: {}", graph.nodes.len());
     //println!("{:#?}", graph.get_node_list());
 
-    let replication_args = ReplicationInitArgs {};
+    let replication_args = InitArgs {};
+    let plan_args: PlanArgs = PlanArgs{ export_csv: Some(PathBuf::from(format!{"{}/source-wand-projects/", std::env::var("HOME").unwrap()}))};
 
     let _ = replicate_init_command(&replication_args);
+    let _ = replicate_plan_command(&plan_args, &url, &version, &project_root, &module_name);
 
     // Replication Plan Andrew Go
-    let rep_plan = replication_plan_andrew_go(&url, &version, &project_root, &module_name).unwrap();
-    println!("{:#?}", rep_plan);
+    //let rep_plan = replication_plan_andrew_go(&url, &version, &project_root, &module_name).unwrap();
+    //println!("{:#?}", rep_plan);
 
 
 }

@@ -7,7 +7,7 @@ use source_wand_common::{project::Project, project_manipulator::{
     }};
 use serde::{Deserialize, Serialize, Deserializer};
 use uuid::Uuid;
-use crate::dependency_tree_generators::go_depenendency_tree_struct::{DependencyTreeNodeGo, Graph};
+use crate::{dependency_tree_generators::go_depenendency_tree_struct::{DependencyTreeNodeGo, Graph}, dependency_tree_node::DependencyTreeNode};
 use rayon::prelude::*; // 1. Import Rayon's parallel iterator traits
 
 
@@ -16,7 +16,7 @@ pub fn parse_dependency<'a>(
     version: & String,
     project_root: & PathBuf,
     module_name: & String,
-    graph: Arc<Graph<DependencyTreeNodeGo>>,
+    graph: Arc<Graph<DependencyTreeNode>>,
 ) {
     ///////////////////////// PRINT ///////////////////////////
     println!("###############NEW-CALL####################");
@@ -93,7 +93,7 @@ pub fn parse_dependency<'a>(
             // ################## STEP: Create A New Project ####################### //
 
             let new_project: Project = Project::new(module_name.clone(), version.clone(), license, url.clone(), subdirectory.clone(), checkout.clone());
-            let new_node: DependencyTreeNodeGo = DependencyTreeNodeGo::new(new_project);
+            let new_node: DependencyTreeNode = DependencyTreeNode::new_node(new_project);
             entry.insert(new_node);
             println!("@@@@@ Added New Node: {}", module_name);
 

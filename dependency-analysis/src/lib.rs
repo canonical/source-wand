@@ -67,7 +67,7 @@ pub fn find_dependency_tree(request: DependencyTreeRequest) -> Result<Arc<Mutex<
     dependency_tree
 }
 
-pub fn find_build_requirements(request: DependencyTreeRequest, dependency_tree: &DependencyTreeNode) -> Result<UniqueDependenciesList> {
+pub fn find_build_requirements(request: DependencyTreeRequest, dependency_tree: Arc<Mutex<DependencyTreeNode>>) -> Result<UniqueDependenciesList> {
     let project_manipulator: AnyProjectManipulator = match request {
         DependencyTreeRequest::LocalProject { path } => {
             LocalProjectManipulator::new(path, false).to_any()

@@ -7,6 +7,7 @@ use source_wand_common::identity::{
     sanitized_name::SanitizedName,
     semantic_version::SemanticVersion
 };
+use source_wand_replication::plan::planner::replication_plan_andrew_go;
 use source_wand_replication::{
     model::{
         package_origin::PackageOrigin,
@@ -21,7 +22,13 @@ pub struct PlanArgs {
     pub export_csv: Option<PathBuf>,
 }
 
-pub fn replicate_plan_command(args: &PlanArgs) -> Result<()> {
+pub fn replicate_plan_command(args: &PlanArgs,
+    url: & String,
+    version: & String,
+    project_root: & PathBuf,
+    module_name: & String,
+
+) -> Result<()> {
     let export_path: Option<PathBuf> = if let Some(output) = &args.export_csv {
         if let Some(extension) = output.extension() {
             if extension != "csv" {
@@ -39,7 +46,9 @@ pub fn replicate_plan_command(args: &PlanArgs) -> Result<()> {
         None
     };
 
-    let plan: ReplicationPlan = plan_replication()?;
+    //EDIT: Replacing Replication Plan w/ Mine
+    //let plan: ReplicationPlan = plan_replication()?;
+    let plan: ReplicationPlan = replication_plan_andrew_go(url, version, project_root, module_name).unwrap();
 
     println!(
         "{} {} packages were identified as required to build the project",
