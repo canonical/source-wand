@@ -34,8 +34,8 @@ pub fn generate_dependency_tree(
             generate_cdxgen_dependency_tree(project_manipulator, Some("java"))
         },
         BuildSystemIdentity::Go => {
-            //generate_go_dependency_tree(project_manipulator)
-            generate_go_dependency_tree_andrew(project_manipulator);
+            generate_go_dependency_tree(project_manipulator)
+            //generate_go_dependency_tree_andrew(project_manipulator);
         },
         BuildSystemIdentity::Unknown => {
             generate_cdxgen_dependency_tree(project_manipulator, None)

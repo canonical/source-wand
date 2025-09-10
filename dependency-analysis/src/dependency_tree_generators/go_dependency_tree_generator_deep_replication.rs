@@ -135,45 +135,16 @@ pub fn parse_dependency(
             let license: String = find_license(&module_name).unwrap_or("".to_string());
             
             let project_manipulator: LocalProjectManipulator = clone_repo(url, &checkout, &path);
+            let go_mod: Option<GoMod> = parse_go_mod(&project_manipulator, &module_name);
+            let go_list_map = get_go_list(&project_manipulator).unwrap();
 
-            let _ = project_manipulator.run_shell("rm go.mod".to_string());
-            let _ = project_manipulator.run_shell(format!("go mod init {}", &module_name));
-            //let _ = project_manipulator.run_shell("sed -i 's/^go 1\\..*/go 1.18.0/' go.mod".to_string());
-            let _ = project_manipulator.run_shell("go mod tidy".to_string());
-            let _go_mod: String = match project_manipulator.run_shell("go mod edit -json".to_string()) {
-                Ok(str) => str,
-                Err(e) => { //TODO: Deal with error better in future
-                    println!("{}", e.to_string());
-                    return
-                }, 
-            }; 
-            println!("Go.Mod String: {}", &_go_mod);
-            let _go_mod_parsed: Option<GoMod> = match serde_json::from_str(&_go_mod) {
-                Ok(gm) => gm,
-                Err(e) => {
-                    println!("ERROR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                    println!("{}", &module_name);
-                    eprintln!("Failed to deserialize: {}", e);
-                    None
-                }
-            };
-            let go_list: String = match project_manipulator.run_shell("go list -m all".to_string()) {
-                Ok(str) => str,
-                Err(e) => {
-                    println!("{}", e.to_string());
-                    return
-                },
-            };
-            println!("Go list for {}: {}", &module_name, &go_list);
-            let go_list_map = parse_go_list_dependencies(&go_list);
             // ################## STEP: Create A New Project ####################### //
-
             let new_project: Project = Project::new(module_name.clone(), version.clone(), license, url.clone(), subdirectory.clone(), checkout.clone());
             let new_node: DependencyTreeNode = DependencyTreeNode::new_node(new_project);
             entry.insert(new_node);
             println!("@@@@@ Added New Node: {}", module_name);
 
-            if let Some(go_mod_parsed) = _go_mod_parsed {
+            if let Some(go_mod_parsed) = go_mod {
                 let parent: String = go_mod_parsed.module.path.clone();
                 if let Some(requires) = go_mod_parsed.require {
                     let children_to_process: Vec<(String, String, String)> = requires.par_iter().filter_map(|dep| {
