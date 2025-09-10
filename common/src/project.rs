@@ -14,7 +14,7 @@ impl Project {
     pub fn new(
         name: String,
         version: String,
-        license: String,
+        license: String, //TODO: Consider license as Option<String>
         repository: String,
         subdirectory: Option<String>,
         checkout: Option<String>,
