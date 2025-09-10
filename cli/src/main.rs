@@ -1,5 +1,3 @@
-use std::{env, path::PathBuf, sync::Arc};
-
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use commands::{
@@ -8,7 +6,6 @@ use commands::{
         DependenciesArgs
     }
 };
-use uuid::Uuid;
 
 use crate::commands::{
     apply::{
@@ -56,29 +53,3 @@ fn main() -> Result<()> {
         Command::Apply(args) => replicate_apply_command(&args),
     }
 }
-
-//fn main() {
-//    let url: String = "https://github.com/canonical/chisel".to_string();
-//    let version: String = "v1.2.0".to_string();
-//    let project_root: PathBuf = PathBuf::from(format!{
-//        "{}/source-wand-projects/", std::env::var("HOME").unwrap()
-//    });
-//    let module_name: String = "github.com/canonical/chisel".to_string();
-//    let graph = Arc::new(Graph::new());
-//    parse_dependency(&url, &version, &project_root, &module_name, Arc::clone(&graph)); 
-//    graph.print_graph();
-//    println!("Final map size: {}", graph.nodes.len());
-//    println!("{:#?}", graph.get_node_list());
-//
-//    let replication_args = InitArgs {};
-//    let plan_args: PlanArgs = PlanArgs{ export_csv: Some(PathBuf::from(format!{"{}/source-wand-projects/", std::env::var("HOME").unwrap()}))};
-//
-//    let _ = replicate_init_command(&replication_args);
-//    let _ = replicate_plan_command(&plan_args, &url, &version, &project_root, &module_name);
-//
-//    // Replication Plan Andrew Go
-//    //let rep_plan = replication_plan_andrew_go(&url, &version, &project_root, &module_name).unwrap();
-//    //println!("{:#?}", rep_plan);
-//
-//
-//}

@@ -86,12 +86,6 @@ impl Serialize for OutputData {
 }
 
 pub fn dependencies_command(args: &DependenciesArgs) -> Result<()> {
-    // If it's local >> Path (No URL, Version)
-    // If it's Git >> URL, Branch
-
-
-
-
     let dependency_tree = match &args.command {
         DependenciesCommand::Local(args) => {
             find_dependency_tree(

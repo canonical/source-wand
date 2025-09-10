@@ -2,7 +2,7 @@ use std::{collections::{HashMap, HashSet}, fs, path::PathBuf, str::FromStr, sync
 use anyhow::Result;
 use reqwest::blocking::{get, Response};
 use scraper::{Html, Selector};
-use source_wand_common::{project::Project, project_manipulator::{
+use source_wand_common::{project::{self, Project}, project_manipulator::{
         local_project_manipulator::LocalProjectManipulator, project_manipulator::ProjectManipulator
     }};
 use serde::{Deserialize};
@@ -11,34 +11,87 @@ use crate::{dependency_tree_generators::dependency_tree_graph::{Graph}, dependen
 use rayon::prelude::*; // 1. Import Rayon's parallel iterator traits
 
 
-pub fn generate_go_dependency_tree(
+
+pub fn generate_go_dependency_tree_andrew(
     project_manipulator: &dyn ProjectManipulator,
-) -> Result<Arc<Mutex<DependencyTreeNode>>> {
-    // URL
-    // Version
-    // Project Root
+) {
     let project_root: PathBuf = PathBuf::from(format!(
         "{}/source-wand-projects/{}",
-        std::env::var("HOME")?,
+        std::env::var("HOME").unwrap(), // Change Back To ?
         Uuid::new_v4().to_string()
     ));
+    let module_name = get_module_name_from_go_mod(project_manipulator);
 
-    // Module Name >> Find in 
+    // ### Initial setup of the graph ###
+    let graph: Arc<Graph<DependencyTreeNode>> = Arc::new(Graph::new());
+    //let graph_clone = Arc::new(&graph);
 
 
+    // ### Initial setup of variables ###
+    let version: String = String::from("");
 
 
+    let go_mod: Option<GoMod> = parse_go_mod(project_manipulator, &module_name);
+    let go_list_map = get_go_list(project_manipulator).unwrap(); // TODO: Fix Later
 
+
+    let new_project: Project = Project::new(module_name.clone(), 
+                                         version.clone(), 
+                                         String::from("License"),
+                                      String::from("Repository"),
+                                    Some(String::from("subdirectory")),
+                                        Some(String::from("Checkout")));
+    let new_node: DependencyTreeNode = DependencyTreeNode::new_node(new_project);
+    let _ = &graph.add_node(format!("{}-{}", module_name.clone(), version.clone()), new_node);
+
+
+    if let Some(gm) = go_mod {
+        let parent: String = gm.module.path.clone();
+        if let Some(requires) = gm.require {
+            let children_to_process: Vec<(String, String, String)> = requires.par_iter().filter_map(|dep| {
+                let child = dep.path.clone();
+                if !graph.does_key_exist(&child) {  // Rough check; entry in recursion will handle races
+                    // Check To Send Right Version
+                    let chosen_version = match go_list_map.get(&child) {
+                        Some(str) => {
+                            println!("@&@&@&@&@& Found version in go list: {}", &child);
+                            str
+                        }
+                        None => {
+                            println!("################ NO FIND VERSION IN GO LIST: {}", &child);
+                            &dep.version
+                        }
+                    };
+                    Some((dep.path.clone(), chosen_version.clone(), get_repository_url(&dep.path)))
+                } else {
+                    None
+                }
+            }).collect();
+            children_to_process.par_iter().for_each(|(child_path, child_version, child_url)| {
+                let graph_clone = graph.clone();
+                parse_dependency(child_url, child_version, &project_root, child_path, graph_clone);
+            });
+            requires.par_iter().for_each(|dep| {
+                let child = dep.path.clone();
+                let child_version = dep.version.clone();
+                println!("## Parent: {} | Child: {}", &parent, &child);
+                graph.edges.entry(format!("{}-{}", parent.clone(), version.clone()))
+                    .or_insert_with(HashSet::new)
+                    .insert(format!("{}-{}", child.clone(), child_version));
+                println!("@@@@ dependency {} has dep {}", &parent, &child);
+            });
+        }
+    }
 }
 
 
 
 
-pub fn parse_dependency<'a>(
-    url: & String,
-    version: & String,
-    project_root: & PathBuf,
-    module_name: & String,
+pub fn parse_dependency(
+    url: &String,
+    version: &String,
+    project_root: &PathBuf,
+    module_name: &String,
     graph: Arc<Graph<DependencyTreeNode>>,
 ) {
     ///////////////////////// PRINT ///////////////////////////
@@ -161,8 +214,76 @@ pub fn parse_dependency<'a>(
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////
-// ################### HELPER FUNCTIONS #######################
+
+
+
+
+
+
+fn get_go_list(project_manipulator: &dyn ProjectManipulator) -> Option<HashMap<String, String>> {
+    let go_list: Option<String> = match project_manipulator.run_shell(String::from("go list -m all")) {
+        Ok(str) => Some(str),
+        Err(e) => {
+            eprintln!("Error occured when running go list -m all: {}", e);
+            None
+        }
+    };
+    if go_list.is_some() {
+        let go_list = go_list.unwrap();
+        Some(parse_go_list_dependencies(&go_list))
+    } else {
+        None
+    }
+}
+
+/// Gets the `go.mod` file from the project (through the project_manipulator)
+/// 
+/// 
+/// # Return
+/// - GoMod
+/// - None: There was some error in getting the go.mod file
+/// 
+fn parse_go_mod(project_manipulator: &dyn ProjectManipulator, module_name: &String) -> Option<GoMod> {
+    let _ = project_manipulator.run_shell(String::from("rm go.mod"));
+    let _ = project_manipulator.run_shell(format!("go mod init {}", &module_name));
+    let _ = project_manipulator.run_shell(String::from("go mod tidy"));
+    let go_mod: Option<String> = match project_manipulator.run_shell(String::from("go mod edit -json")) {
+        Ok(str) => Some(str),
+        Err(e) => {
+            eprintln!("Error occured when getting the go.mod file: {}", e);
+            None
+        }
+    };
+    if go_mod.is_some() {
+        let go_mod_parsed : Option<GoMod> = match serde_json::from_str(&go_mod.unwrap()) {
+            Ok(value) => value,
+            Err(e) => {
+                eprintln!("Failed to deserialize the go.mod file {}", e);
+                None
+            }
+        };
+        go_mod_parsed
+    } else { // Go.mod Failed To Parse
+        None
+    }
+}
+
+/// 
+/// # Arguments
+/// - project_manipulator: LocalProjectManipulator
+///     - *NOTE* root directory needs to be the root of the repository
+/// # Return
+/// - (if found) >> String of the module
+/// - (if fails) >> Empty string
+fn get_module_name_from_go_mod(project_manipulator: &dyn ProjectManipulator ) -> String {
+    match project_manipulator.run_shell(String::from("go list -m")) {
+        Ok(str) => str,
+        Err(e) => {
+            eprintln!("Finding the module name from the go.mod file failed with an error: {}", e);
+            String::from("")
+        }
+    }
+}
 
 fn parse_go_list_dependencies(input: &str) -> HashMap<String, String> {
     let mut dependencies = HashMap::new();
@@ -227,16 +348,16 @@ fn get_repository_url_pkg_go_dev(module_path: &str) -> Option<String> {
 /// Clone the repository at the URL, Version, and Project Root (The path to clone to)
 /// Return the manipulator that's at the root of the repository
 fn clone_repo(url: &String, checkout: &Option<String>, project_root: &PathBuf) -> LocalProjectManipulator {
+    // Create a new path to clone the repository
     let mut repo_root: PathBuf = project_root.clone();
     repo_root.push(Uuid::new_v4().to_string());
-    let result = fs::create_dir_all(&repo_root);
-    if let Err(e) = result {
-        eprintln!("Failed to create directory: {}", e);
-    } else {
-        println!("Successfully created directory!");
+
+    match fs::create_dir_all(&repo_root) {
+        Ok(_) => println!("Successfully created directory!"),
+        Err(e) => eprintln!("Failed to create directory: {}", e),
     }
-    let manipulator: LocalProjectManipulator = LocalProjectManipulator::new(
-        repo_root, false);
+
+    let manipulator: LocalProjectManipulator = LocalProjectManipulator::new(repo_root, true);
     match manipulator.try_run_shell(format!("git clone \"{}\" .", url,), 20) {
         Ok(str) => println!("Clone: {}", str),
         Err(e) => eprintln!("Error: {}", e),
@@ -252,9 +373,15 @@ fn clone_repo(url: &String, checkout: &Option<String>, project_root: &PathBuf) -
 }
 
 /// Resolves the version & checkout from the "version" given by Go
-/// Version: The version we want to write on our sourcecraft.yaml
-/// Checkout: The checkout version we want on our build
-/// (Checkout, Subdirectory)
+/// 
+/// # Arguments
+/// - Version: The version we want to write on our sourcecraft.yaml
+/// - Checkout: The checkout version we want on our build
+/// 
+/// # Return: (Checkout, Subdirectory)
+/// - Checkout: The checkout value (used for Git)
+/// - Subdirectory: The subdirectory to checkout in (for monorepositories)
+/// 
 fn fetch_checkout(name: &String, version: &String, repository: &String) -> Result<(Option<String>, Option<String>)> {
     // Case 1: v1.2.3 >> (v1.2.3)
     let project_manipulator: LocalProjectManipulator = LocalProjectManipulator::new(PathBuf::from_str("/")?, true);
@@ -296,6 +423,9 @@ fn fetch_checkout(name: &String, version: &String, repository: &String) -> Resul
     Ok((checkout, path))
 }
 
+
+
+/// Looks for the project license for a given Go module
 fn find_license(module_path: &str) -> Option<String> {
     let url: String = format!("https://pkg.go.dev/{}?go-get=1", module_path);
 
