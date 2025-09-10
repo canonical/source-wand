@@ -2,11 +2,13 @@ use std::collections::{HashSet};
 use std::fmt::{self};
 
 // ### DependencyTreeNodeGo ###
-use std::sync::{Arc,Mutex};
+use std::sync::{Arc,Mutex, MutexGuard};
 use serde::{Deserialize, Serialize};
 
 
 use dashmap::DashMap;
+
+use crate::dependency_tree_node::DependencyTreeNode;
 
 impl<DependencyTreeNode: fmt::Debug> fmt::Debug for Graph<DependencyTreeNode> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -102,4 +104,43 @@ impl<T: Clone> Graph<T> {
     }
 }
 
+impl Graph<DependencyTreeNode> {
+    pub fn to_dependency_tree_node(&self) -> Option<Arc<Mutex<DependencyTreeNode>>> {
+        let nodes: Arc<DashMap<String, DependencyTreeNode>> = self.nodes.clone();
+        let edges: Arc<DashMap<String, HashSet<String>>> = self.edges.clone();
 
+        let tree_nodes: DashMap<String, Arc<Mutex<DependencyTreeNode>>> = DashMap::new();
+
+        for entry in nodes.iter() {
+            let (key, value) = entry.pair();
+            tree_nodes.insert(key.clone(), Arc::new(Mutex::new(value.clone())));
+        }
+
+        for entry in edges.iter() {
+            let (parent_key, children_keys) = entry.pair();
+            if let Some(parent_node_mutex) = tree_nodes.get(parent_key) {
+                let mut parent_node: MutexGuard<'_, DependencyTreeNode> = parent_node_mutex.lock().unwrap();
+                for child_key in children_keys.iter() {
+                    if let Some(child_node_mutex) = tree_nodes.get(child_key) {
+                        parent_node.dependencies.push(child_node_mutex.clone());
+                    }
+                }
+            }
+        }
+
+        let mut all_children: HashSet<String> = HashSet::new();
+        for children_keys in edges.iter().map(|entry| entry.value().clone()) {
+            all_children.extend(children_keys.iter().cloned());
+        }
+
+        let root_node_key: Option<String> = edges.iter()
+            .map(|entry| entry.key().clone())
+            .find(|parent_key| !all_children.contains(parent_key));
+
+        if let Some(root_key) = root_node_key {
+            tree_nodes.get(&root_key).map(|entry| entry.value().clone())
+        } else {
+            None
+        }
+    }
+}

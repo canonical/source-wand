@@ -1,5 +1,5 @@
 use std::{collections::{HashMap, HashSet}, fs, path::PathBuf, str::FromStr, sync::{Arc, Mutex}};
-use anyhow::Result;
+use anyhow::{bail, Result};
 use reqwest::blocking::{get, Response};
 use scraper::{Html, Selector};
 use source_wand_common::{project::{self, Project}, project_manipulator::{
@@ -14,7 +14,7 @@ use rayon::prelude::*; // 1. Import Rayon's parallel iterator traits
 
 pub fn generate_go_dependency_tree_andrew(
     project_manipulator: &dyn ProjectManipulator,
-) {
+) -> Result<Arc<Mutex<DependencyTreeNode>>> {
     let project_root: PathBuf = PathBuf::from(format!(
         "{}/source-wand-projects/{}",
         std::env::var("HOME").unwrap(), // Change Back To ?
@@ -82,6 +82,13 @@ pub fn generate_go_dependency_tree_andrew(
             });
         }
     }
+
+    let tree: Arc<Mutex<DependencyTreeNode>> = match graph.to_dependency_tree_node() {
+        Some(root) => root,
+        None => bail!("Dependency tree must have a root"),
+    };
+
+    Ok(tree)
 }
 
 
@@ -253,7 +260,7 @@ fn get_module_name_from_go_mod(project_manipulator: &dyn ProjectManipulator ) ->
             eprintln!("Finding the module name from the go.mod file failed with an error: {}", e);
             String::from("")
         }
-    }
+    }.replace("\n", "")
 }
 
 fn parse_go_list_dependencies(input: &str) -> HashMap<String, String> {

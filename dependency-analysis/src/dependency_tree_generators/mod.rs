@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use anyhow::Result;
 use source_wand_common::{project, project_manipulator::project_manipulator::AnyProjectManipulator};
 
+use crate::dependency_tree_generators::go_dependency_tree_generator_deep_replication::generate_go_dependency_tree_andrew;
 use crate::{
     build_systems::build_system_identity::BuildSystemIdentity,
     dependency_tree_generators::{cdxgen_dependency_tree_generator::generate_cdxgen_dependency_tree, go_dependency_tree_generator::generate_go_dependency_tree},
@@ -34,8 +35,8 @@ pub fn generate_dependency_tree(
             generate_cdxgen_dependency_tree(project_manipulator, Some("java"))
         },
         BuildSystemIdentity::Go => {
-            generate_go_dependency_tree(project_manipulator)
-            //generate_go_dependency_tree_andrew(project_manipulator);
+            // generate_go_dependency_tree(project_manipulator)
+            generate_go_dependency_tree_andrew(project_manipulator)
         },
         BuildSystemIdentity::Unknown => {
             generate_cdxgen_dependency_tree(project_manipulator, None)
