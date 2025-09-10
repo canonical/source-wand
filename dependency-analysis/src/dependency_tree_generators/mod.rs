@@ -1,7 +1,8 @@
 use std::sync::{Arc, Mutex};
+use std::path::PathBuf;
 
 use anyhow::Result;
-use source_wand_common::project_manipulator::project_manipulator::AnyProjectManipulator;
+use source_wand_common::{project, project_manipulator::project_manipulator::AnyProjectManipulator};
 
 use crate::{
     build_systems::build_system_identity::BuildSystemIdentity,
@@ -13,6 +14,8 @@ pub mod rust_cargo_dependency_tree_generator;
 pub mod python_pip_dependency_tree_generator;
 pub mod java_maven_dependency_tree_generator;
 pub mod go_dependency_tree_generator;
+pub mod go_dependency_tree_generator_deep_replication;
+pub mod dependency_tree_graph;
 
 pub mod cdxgen_dependency_tree_generator;
 
@@ -32,6 +35,7 @@ pub fn generate_dependency_tree(
         },
         BuildSystemIdentity::Go => {
             generate_go_dependency_tree(project_manipulator)
+            //generate_go_dependency_tree_andrew(project_manipulator);
         },
         BuildSystemIdentity::Unknown => {
             generate_cdxgen_dependency_tree(project_manipulator, None)
