@@ -11,12 +11,12 @@ Specifically, it serves two main purposes:
 
 `source-wand` is language agnostic: you will get the results in the same format irrespective of language.
 
-Here is an [overview of the supported languages](/supported-languages)
+Here is an [overview of the supported languages](/source-wand/supported-languages)
 
 ## In this documentation
 
-| [Tutorials](/tutorials/all)                   | [How-to guides](/how-to-guides/all)      |
+| [Tutorials](/source-wand/tutorials/all)                   | [How-to guides](/source-wand/how-to-guides/all)      |
 |-------------------------------------------------------------|--------------------------------------------------------|
 | Learn source-wand with step-by-step tutorials.              | Find how to achieve your goals with how-to guides.     |
-| [**Explanations**](/explanations/all)         | [**References**](/references/all)        |
+| [**Explanations**](/source-wand/explanations/all)         | [**References**](/source-wand/references/all)        |
 | Understand source-wand concepts with detailed explanations. | Easily access facts about source-wand with references. |
