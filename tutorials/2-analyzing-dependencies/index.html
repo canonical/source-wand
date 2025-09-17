@@ -9,10 +9,10 @@
       
       
       
-        <link rel="prev" href="../../how-to-guides/all/">
+        <link rel="prev" href="../1-installing-source-wand/">
       
       
-        <link rel="next" href="../../tutorials/0-all/">
+        <link rel="next" href="../3-replicating-a-project/">
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
@@ -20,7 +20,7 @@
     
     
       
-        <title>All - Source-Wand Documentation</title>
+        <title>Analyzing dependencies - Source-Wand Documentation</title>
       
     
     
@@ -73,6 +73,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#analyzing-dependencies" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -105,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              All
+              Analyzing dependencies
             
           </span>
         </div>
@@ -414,20 +419,18 @@
       
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
         
           
           <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
@@ -443,7 +446,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             References
@@ -454,17 +457,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../references/all/" class="md-nav__link">
         
   
   
@@ -475,7 +471,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -492,18 +487,20 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
         
           
           <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
@@ -519,7 +516,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
             Tutorials
@@ -533,7 +530,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/0-all/" class="md-nav__link">
+      <a href="../0-all/" class="md-nav__link">
         
   
   
@@ -556,7 +553,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/1-installing-source-wand/" class="md-nav__link">
+      <a href="../1-installing-source-wand/" class="md-nav__link">
         
   
   
@@ -576,10 +573,19 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../tutorials/2-analyzing-dependencies/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -590,6 +596,7 @@
   
 
       </a>
+      
     </li>
   
 
@@ -602,7 +609,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/3-replicating-a-project/" class="md-nav__link">
+      <a href="../3-replicating-a-project/" class="md-nav__link">
         
   
   
@@ -642,6 +649,8 @@
   
   
   
+    
+  
   
 </nav>
                   </div>
@@ -657,9 +666,47 @@
 
 
 
-  <h1>All</h1>
-
-
+<h1 id="analyzing-dependencies">Analyzing dependencies</h1>
+<p>The first fundamental use case for <code>source-wand</code> is to analyze the dependencies of an open-source project.
+At the most basic level, <code>source-wand</code> will generate a tree of the dependencies of your project.</p>
+<p>Then, you can format and alter the analysis to:
+ - Get a flat list of unique dependency/version pairs
+ - Get the minimal set of dependencies required to build your project</p>
+<h1 id="generating-a-dependency-tree">Generating a dependency tree</h1>
+<p>If you want to generate the dependency tree of a project, run the following command. In this case, we are assuming the project you are analyzing is https://github.com/canonical/chisel.
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>source-wand<span class="w"> </span>dependencies<span class="w"> </span>git<span class="w"> </span>https://github.com/canonical/chisel
+</span></code></pre></div></p>
+<p>This will clone the repository, detect which language/build system is used (Golang in this case) and run the right commands to generate the dependency tree. Finally, it pases that tree into a format that is common for all languages so that the output can be formatted as detailed in the next sections in the same way for all languges.</p>
+<h2 id="formatting-a-dependency-tree">Formatting a dependency tree</h2>
+<p>You can use the <code>--format [json|yaml]</code> on the <code>dependencies</code> command to convert the tree into either <code>json</code> or <code>yaml</code>.</p>
+<p>For example, to get <code>json</code>:
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>source-wand<span class="w"> </span>dependencies<span class="w"> </span>--format<span class="o">=</span>json<span class="w"> </span>git<span class="w"> </span>https://github.com/canonical/chisel
+</span></code></pre></div></p>
+<p>Or to get <code>yaml</code>:
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>source-wand<span class="w"> </span>dependencies<span class="w"> </span>--format<span class="o">=</span>yaml<span class="w"> </span>git<span class="w"> </span>https://github.com/canonical/chisel
+</span></code></pre></div></p>
+<h1 id="flattening-a-dependency-tree">Flattening a dependency tree</h1>
+<p>When you generate the full dependency tree, it is possible that multiple transitive dependencies depend on the same other dependency. In that case, the full tree will contain deplicates.</p>
+<p>Furthermore, if you want to simply iterate over all dependencies using a tree, you need to use a tree traversal algorithm which can be overkill for many situations.</p>
+<p>Using the <code>--flatten</code> flag can solve these problems.</p>
+<p>Run the following to generate a unique list of dependency name/version pairs.
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>source-wand<span class="w"> </span>dependencies<span class="w"> </span>--flatten<span class="w"> </span>git<span class="w"> </span>https://github.com/canonical/chisel
+</span></code></pre></div></p>
+<p>You can combine <code>--flatten</code> with <code>--format</code>:
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>source-wand<span class="w"> </span>dependencies<span class="w"> </span>--flatten<span class="w"> </span>--format<span class="o">=</span>json
+</span></code></pre></div></p>
+<h1 id="generating-the-minimal-set-of-dependencies-required-to-build">Generating the minimal set of dependencies required to build</h1>
+<p>Generating the full dependency tree can give you a great first impression of the dependency situation of a given project. However, sometimes not all dependencies are used in the build process.</p>
+<p>This is the case for Golang, which selects only one version per dependency following the MVS algorithm.</p>
+<p>Instead of using the <code>--flatten</code> flag, which will give you unique pairs of dependency name/version, use:
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>source-wand<span class="w"> </span>dependencies<span class="w"> </span>--minimal-build-requirements<span class="w"> </span>git<span class="w"> </span>https://github.com/canonical/chisel
+</span></code></pre></div></p>
+<p>This will return only the dependencies that are actually used in the build process.</p>
+<p>You can also combine <code>--minimal-build-requirements</code> with <code>--format</code>:
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>source-wand<span class="w"> </span>dependencies<span class="w"> </span>--minimal-build-requirements<span class="w"> </span>--format<span class="o">=</span>json<span class="w"> </span>git<span class="w"> </span>https://github.com/canonical/chisel
+</span></code></pre></div></p>
+<hr />
+<p>Next tutorial: <a href="/source-wand/tutorials/replicating-a-project">Replicating a project</a></p>
 
 
 
