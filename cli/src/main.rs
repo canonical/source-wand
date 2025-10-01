@@ -20,6 +20,10 @@ use crate::commands::{
         replicate_plan_command,
         PlanArgs
     },
+    replication::{
+        replication_command,
+        ReplicationArgs
+    },
 };
 
 mod commands;
@@ -43,6 +47,9 @@ enum Command {
 
     #[command(about = "Apply the deep replication plan")]
     Apply(ApplyArgs),
+
+    #[command(about = "[DEPRECATED] Replicate a project")]
+    Replication(ReplicationArgs),
 }
 
 fn main() -> Result<()> {
@@ -51,5 +58,6 @@ fn main() -> Result<()> {
         Command::Init(args) => replicate_init_command(&args),
         Command::Plan(args) => replicate_plan_command(&args),
         Command::Apply(args) => replicate_apply_command(&args),
+        Command::Replication(args) => replication_command(&args),
     }
 }
