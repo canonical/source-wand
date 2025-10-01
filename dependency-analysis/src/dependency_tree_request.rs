@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+#[derive(Debug, Clone)]
 pub enum DependencyTreeRequest {
     LocalProject { path: PathBuf },
     GitProject { url: String, branch: Option<String> },

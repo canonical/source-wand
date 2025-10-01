@@ -1,7 +1,8 @@
 use std::{path::PathBuf, sync::{Arc, Mutex}};
 
 use anyhow::{Error, Result};
-use clap::{ArgAction, Parser, Subcommand, ValueEnum};
+use clap::{ArgAction, Parser, ValueEnum};
+use colorize::AnsiColor;
 use serde::Serialize;
 use source_wand_dependency_analysis::{
     dependency_tree_node::DependencyTreeNode,
@@ -13,44 +14,22 @@ use source_wand_dependency_analysis::{
 
 #[derive(Debug, Parser)]
 pub struct DependenciesArgs {
-    #[command(subcommand)]
-    command: DependenciesCommand,
+    path: String,
 
-    #[arg(long, value_enum, default_value = "tree")]
+    #[arg(long, short)]
+    checkout: Option<String>,
+
+    #[arg(long, short, value_enum, default_value = "tree")]
     format: OutputFormat,
 
-    #[arg(long, action = ArgAction::SetFalse)]
+    #[arg(long, action = ArgAction::SetTrue)]
     flatten: bool,
 
     #[arg(long, action = ArgAction::SetTrue)]
     minimal_build_requirements: bool,
-}
 
-#[derive(Debug, Subcommand)]
-pub enum DependenciesCommand {
-    #[command(about = "From a local project.")]
-    Local(LocalDependenciesArgs),
-    #[command(about = "From a project in a git repository.")]
-    Git(GitDependenciesArgs),
-    #[command(about = "From the name/version pair of a project.")]
-    ByName(NameDependenciesArgs),
-}
-
-#[derive(Debug, Parser)]
-pub struct LocalDependenciesArgs {
-    path: PathBuf,
-}
-
-#[derive(Debug, Parser)]
-pub struct GitDependenciesArgs {
-    url: String,
-    branch: Option<String>,
-}
-
-#[derive(Debug, Parser)]
-pub struct NameDependenciesArgs {
-    name: String,
-    version: String,
+    #[arg(long, short)]
+    export: Option<PathBuf>,
 }
 
 #[derive(Debug, Clone, ValueEnum)]
@@ -85,68 +64,44 @@ impl Serialize for OutputData {
     }
 }
 
+fn is_git_url(s: &str) -> bool {
+    s.starts_with("http://") ||
+    s.starts_with("https://") ||
+    s.starts_with("git://") ||
+    s.starts_with("ssh://") ||
+    s.starts_with("git@")
+}
+
 pub fn dependencies_command(args: &DependenciesArgs) -> Result<()> {
-    let dependency_tree = match &args.command {
-        DependenciesCommand::Local(args) => {
-            find_dependency_tree(
-                DependencyTreeRequest::LocalProject {
-                    path: args.path.clone()
-                }
-            ).map_err(|e| Error::msg(e))?
-        },
-        DependenciesCommand::Git(args) => {
-            find_dependency_tree(
-                DependencyTreeRequest::GitProject {
-                    url: args.url.clone(),
-                    branch: args.branch.clone(),
-                }
-            ).map_err(|e| Error::msg(e))?
-        },
-        DependenciesCommand::ByName(args) => {
-            find_dependency_tree(
-                DependencyTreeRequest::NameBased {
-                    name: args.name.clone(),
-                    version: args.version.clone(),
-                }
-            ).map_err(|e| Error::msg(e))?
-        },
+    let request: DependencyTreeRequest = if is_git_url(&args.path) {
+        DependencyTreeRequest::GitProject {
+            url: args.path.clone(),
+            branch: args.checkout.clone(),
+        }
+    } else {
+        if args.checkout.is_some() {
+            eprintln!("{}", "Warning: The '--checkout' argument is only used for remote git repositories, it will be ignored.".yellow());
+        }
+        DependencyTreeRequest::LocalProject {
+            path: PathBuf::from(&args.path),
+        }
     };
 
+    let dependency_tree = find_dependency_tree(request.clone())
+        .map_err(|e| Error::msg(e))?;
+
     let output_data: OutputData = if args.minimal_build_requirements {
-        OutputData::List(match &args.command {
-            DependenciesCommand::Local(args) => {
-                find_build_requirements(
-                    DependencyTreeRequest::LocalProject {
-                        path: args.path.clone()
-                    },
-                    dependency_tree.clone(),
-                ).map_err(|e| Error::msg(e))?
-            },
-            DependenciesCommand::Git(args) => {
-                find_build_requirements(
-                    DependencyTreeRequest::GitProject {
-                        url: args.url.clone(),
-                        branch: args.branch.clone(),
-                    },
-                    dependency_tree.clone(),
-                ).map_err(|e| Error::msg(e))?
-            },
-            DependenciesCommand::ByName(args) => {
-                find_build_requirements(
-                    DependencyTreeRequest::NameBased {
-                        name: args.name.clone(),
-                        version: args.version.clone(),
-                    },
-                    dependency_tree.clone(),
-                ).map_err(|e| Error::msg(e))?
-            },
-        })
+        let build_requirements = find_build_requirements(
+            request,
+            dependency_tree.clone(),
+        ).map_err(|e| Error::msg(e))?;
+        OutputData::List(build_requirements)
     }
     else if args.flatten {
-        OutputData::Tree(dependency_tree)
+        OutputData::List(dependency_tree.lock().unwrap().flatten())
     }
     else {
-        OutputData::List(dependency_tree.lock().unwrap().flatten())
+        OutputData::Tree(dependency_tree)
     };
 
     match args.format {
