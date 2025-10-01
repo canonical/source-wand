@@ -15,7 +15,7 @@ Here is an [overview of the supported languages](/source-wand/supported-language
 
 ## In this documentation
 
-| [Tutorials](/source-wand/tutorials/all)                   | [How-to guides](/source-wand/how-to-guides/all)      |
+| [Tutorials](/source-wand/tutorials/0-all)                   | [How-to guides](/source-wand/how-to-guides/all)      |
 |-------------------------------------------------------------|--------------------------------------------------------|
 | Learn source-wand with step-by-step tutorials.              | Find how to achieve your goals with how-to guides.     |
 | [**Explanations**](/source-wand/explanations/all)         | [**References**](/source-wand/references/all)        |
