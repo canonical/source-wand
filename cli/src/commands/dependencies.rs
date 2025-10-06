@@ -4,6 +4,7 @@ use anyhow::{Error, Result};
 use clap::{ArgAction, Parser, ValueEnum};
 use colorize::AnsiColor;
 use serde::Serialize;
+use source_wand_common::utils::write_yaml_file::write_yaml_file;
 use source_wand_dependency_analysis::{
     dependency_tree_node::DependencyTreeNode,
     dependency_tree_request::DependencyTreeRequest,
@@ -87,22 +88,31 @@ pub fn dependencies_command(args: &DependenciesArgs) -> Result<()> {
         }
     };
 
-    let dependency_tree = find_dependency_tree(request.clone())
+    let dependency_tree: Arc<Mutex<DependencyTreeNode>> = find_dependency_tree(request.clone())
         .map_err(|e| Error::msg(e))?;
 
     let output_data: OutputData = if args.minimal_build_requirements {
-        let build_requirements = find_build_requirements(
-            request,
+        let build_requirements: UniqueDependenciesList = find_build_requirements(
+            request.clone(),
             dependency_tree.clone(),
         ).map_err(|e| Error::msg(e))?;
         OutputData::List(build_requirements)
     }
     else if args.flatten {
-        OutputData::List(dependency_tree.lock().unwrap().flatten())
+        OutputData::List(dependency_tree.clone().lock().unwrap().flatten())
     }
     else {
-        OutputData::Tree(dependency_tree)
+        OutputData::Tree(dependency_tree.clone())
     };
+
+    if let Some(export_path) = &args.export {
+        let build_requirements: UniqueDependenciesList = find_build_requirements(
+            request,
+            dependency_tree.clone(),
+        ).map_err(|e| Error::msg(e))?;
+
+        write_yaml_file(&build_requirements, export_path.as_os_str().to_str().unwrap())?;
+    }
 
     match args.format {
         OutputFormat::Tree => println!("{}", output_data.to_string().map_err(|e| Error::msg(e))?),

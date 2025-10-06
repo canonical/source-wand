@@ -1,9 +1,14 @@
 pub mod replication_config;
+
 pub mod replication_manifest;
+pub mod automatic_replication_manifest;
+pub mod manual_replication_manifest;
+
 pub mod replication_plan;
 
 pub mod hooks;
 
+pub mod manual_package;
 pub mod package;
 pub mod dependency;
 

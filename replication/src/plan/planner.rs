@@ -31,25 +31,52 @@ use source_wand_dependency_analysis::{
 use uuid::Uuid;
 
 use crate::model::{
+    automatic_replication_manifest::AutomaticReplicationManifest,
     dependency::Dependency,
-    package::Package,
-    package_destination::PackageDestination,
+    manual_replication_manifest::ManualReplicationManifest,
+    package::Package, package_destination::PackageDestination,
     package_destination_git::PackageDestinationGit,
     package_origin::PackageOrigin,
     package_origin_go_cache::PackageOriginGoCache,
     replication_manifest::ReplicationManifest,
-    replication_plan::ReplicationPlan
+    replication_plan::ReplicationPlan,
 };
 
 pub fn plan_replication() -> Result<ReplicationPlan> {
+    let replication_manifest: ReplicationManifest = read_yaml_file("replication.yaml")?;
+
+    match replication_manifest {
+        ReplicationManifest::Manual(manifest) => plan_manual_replication(manifest),
+        ReplicationManifest::Automatic(manifest) => plan_automatic_replication(manifest),
+    }
+}
+
+fn plan_manual_replication(manifest: ManualReplicationManifest) -> Result<ReplicationPlan> {
+    let packages: Vec<Package> = manifest.packages
+        .iter()
+        .map(
+            |package|
+            Package::new(package.origin.clone(), package.destination.clone(), Vec::new(), true)
+        )
+        .collect();
+
+    let replication_plan: ReplicationPlan = ReplicationPlan::new(
+        String::new(),
+        None,
+        packages,
+        manifest.config,
+    );
+
+    Ok(replication_plan)
+}
+
+fn plan_automatic_replication(manifest: AutomaticReplicationManifest) -> Result<ReplicationPlan> {
     println!(
         "{} analyzing the origin project's dependency tree",
         "[plan]".green(),
     );
 
-    let replication_manifest: ReplicationManifest = read_yaml_file("replication.yaml")?;
-
-    match replication_manifest.origin {
+    match manifest.origin {
         PackageOrigin::Git(origin) => {
             let uuid: Uuid = Uuid::new_v4();
             let top_level_directory: PathBuf = PathBuf::from(format!("./source-wand/{}", uuid));
@@ -188,7 +215,7 @@ pub fn plan_replication() -> Result<ReplicationPlan> {
                         let name: SanitizedName = SanitizedName::new(&name);
                         let version: SemanticVersion = SemanticVersion::new(&version);
 
-                        let PackageDestination::Git(package_destination) = &replication_manifest.destination_template;
+                        let PackageDestination::Git(package_destination) = &manifest.destination_template;
 
                         let package_destination_url: String = name.apply(&package_destination.git);
                         let package_destination_url: String = version.apply(&package_destination_url);
@@ -227,10 +254,10 @@ pub fn plan_replication() -> Result<ReplicationPlan> {
             top_level.cleanup();
 
             let replication_plan: ReplicationPlan = ReplicationPlan::new(
-                replication_manifest.project,
-                replication_manifest.hooks,
+                manifest.project,
+                manifest.hooks,
                 packages,
-                replication_manifest.config,
+                manifest.config,
             );
 
             Ok(replication_plan)
